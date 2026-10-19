@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Robotic Arm | Control HMI</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">RA</div>
+      <div>
+        <h1>Robotic Arm</h1>
+        <p>Industrial Control Interface</p>
+      </div>
+    </div>
+    <div class="system-status">
+      <span class="status-dot" id="systemDot"></span>
+      <span id="systemStatus">Connecting...</span>
+      <span class="mode-tag">SIMULATION</span>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">CONTROL CENTER</p>
+        <h2>Robot Overview</h2>
+        <p class="muted">Monitor your arm and prepare motion commands.</p>
+      </div>
+      <div class="connection-card">
+        <span class="muted">Controller</span>
+        <strong id="arduinoStatus">Disconnected</strong>
+        <span class="small">Arduino · USB Serial</span>
+      </div>
+    </section>
+
+    <section class="status-grid">
+      <article class="panel status-card">
+        <span class="card-label">System</span>
+        <strong id="systemCard">Checking</strong>
+        <span class="small">HMI server</span>
+      </article>
+      <article class="panel status-card">
+        <span class="card-label">Arduino</span>
+        <strong id="arduinoCard">Offline</strong>
+        <span class="small">Motion controller</span>
+      </article>
+      <article class="panel status-card">
+        <span class="card-label">Camera</span>
+        <strong id="cameraCard">Not connected</strong>
+        <span class="small">Vision subsystem</span>
+      </article>
+      <article class="panel status-card">
+        <span class="card-label">Control Mode</span>
+        <strong>Simulation</strong>
+        <span class="small">Hardware disabled</span>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <article class="panel joints-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">MOTION</p>
+            <h2>Joint Positions</h2>
+          </div>
+          <span class="small">Degrees (°)</span>
+        </div>
+
+        <p class="notice">
+          Simulation only. These controls do not move the physical arm.
+        </p>
+
+        <div id="jointControls" class="joint-list">
+          <p class="muted">Loading joint positions...</p>
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-secondary" id="homeBtn" type="button">
+            Reset Simulation
+          </button>
+          <button class="btn btn-primary" id="applyBtn" type="button">
+            Apply Positions
+          </button>
+        </div>
+        <p id="controlMessage" class="feedback" aria-live="polite"></p>
+      </article>
+
+      <aside class="side-column">
+        <article class="panel">
+          <p class="eyebrow">OPERATIONS</p>
+          <h2>Robot Controls</h2>
+          <p class="muted">
+            Hardware movement is not enabled in this version.
+          </p>
+          <div class="operation-list">
+            <button class="btn btn-secondary full-width" id="startBtn"
+              type="button">Start · Simulation</button>
+            <button class="btn btn-secondary full-width" id="pauseBtn"
+              type="button">Pause · Simulation</button>
+            <button class="btn btn-stop full-width" id="stopBtn"
+              type="button">Stop · Simulation</button>
+          </div>
+          <p id="operationStatus" class="feedback" aria-live="polite">
+            Simulation idle
+          </p>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">SAFETY</p>
+          <h2>Safety Status</h2>
+          <div class="safety-row">
+            <span class="status-dot status-amber"></span>
+            <div>
+              <strong>Hardware E-stop</strong>
+              <p class="small">Not monitored by this HMI</p>
+            </div>
+          </div>
+          <div class="safety-row">
+            <span class="status-dot status-green"></span>
+            <div>
+              <strong>Simulation controls</strong>
+              <p class="small">No hardware commands sent</p>
+            </div>
+          </div>
+        </article>
+      </aside>
+    </section>
+
+    <footer>
+      Robotic Arm HMI · Local Network · Prototype
+      <span id="lastUpdated">Waiting for status...</span>
+    </footer>
+  </main>
+</body>
+</html>
