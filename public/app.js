@@ -8,10 +8,45 @@ const jointNames = [
 ];
 
 const DEFAULT_ANGLES = [90, 90, 90, 90, 90];
+const STORAGE_KEY = "roboticArmSavedPoses";
+
 let angles = [...DEFAULT_ANGLES];
 let operation = "Idle";
+let savedPoses = loadSavedPoses();
 
 const $ = (id) => document.getElementById(id);
+
+function loadSavedPoses() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+    if (!Array.isArray(stored)) return [];
+
+    return stored.filter((pose) =>
+      pose &&
+      typeof pose.id === "string" &&
+      typeof pose.name === "string" &&
+      Array.isArray(pose.angles) &&
+      pose.angles.length === 5 &&
+      pose.angles.every(
+        (angle) => Number.isInteger(angle) && angle >= 0 && angle <= 180
+      )
+    );
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedPoses() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPoses));
+    return true;
+  } catch {
+    $("controlMessage").textContent =
+      "Could not save poses in this browser.";
+    return false;
+  }
+}
 
 function setDot(element, state) {
   element.className = "status-dot";
@@ -79,22 +114,128 @@ function renderJoints() {
   });
 }
 
-function updateStatus(data) {
-  const online = data.system === "online";
+function renderSavedPoses() {
+  const container = $("savedPoses");
+  container.replaceChildren();
 
-  $("systemStatus").textContent = online ? "Server Online" : "Server Offline";
-  $("systemCard").textContent = online ? "Online" : "Offline";
-  $("arduinoStatus").textContent =
-    data.arduino === "connected" ? "Connected" : "Disconnected";
-  $("arduinoCard").textContent =
-    data.arduino === "connected" ? "Connected" : "Offline";
-  $("cameraCard").textContent = data.camera || "Unknown";
+  $("poseCount").textContent =
+    `${savedPoses.length} saved`;
 
-  $("systemDot").className = "status-dot";
-  setDot($("systemDot"), online ? "online" : "offline");
+  if (savedPoses.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No poses saved yet.";
+    container.append(empty);
+    return;
+  }
 
-  $("lastUpdated").textContent =
-    `Last updated: ${new Date().toLocaleTimeString()}`;
+  savedPoses.forEach((pose) => {
+    const card = document.createElement("div");
+    card.className = "saved-pose";
+
+    const info = document.createElement("div");
+    info.className = "saved-pose-info";
+
+    const name = document.createElement("strong");
+    name.textContent = pose.name;
+
+    const values = document.createElement("span");
+    values.textContent =
+      pose.angles.map((angle, index) =>
+        `J${index + 1}: ${angle}°`
+      ).join(" · ");
+
+    info.append(name, values);
+
+    const actions = document.createElement("div");
+    actions.className = "saved-pose-actions";
+
+    const loadButton = document.createElement("button");
+    loadButton.className = "btn btn-secondary";
+    loadButton.type = "button";
+    loadButton.textContent = "Load";
+    loadButton.addEventListener("click", () => loadPose(pose.id));
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "btn btn-secondary pose-delete";
+    deleteButton.type = "button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => deletePose(pose.id));
+
+    actions.append(loadButton, deleteButton);
+    card.append(info, actions);
+    container.append(card);
+  });
+}
+
+function savePose(event) {
+  event.preventDefault();
+
+  const name = $("poseName").value.trim();
+
+  if (!name) {
+    $("controlMessage").textContent = "Enter a name for this pose.";
+    return;
+  }
+
+  if (savedPoses.length >= 50) {
+    $("controlMessage").textContent =
+      "Pose limit reached. Delete a pose before saving another.";
+    return;
+  }
+
+  if (savedPoses.some((pose) =>
+    pose.name.toLowerCase() === name.toLowerCase()
+  )) {
+    $("controlMessage").textContent =
+      "A pose with that name already exists. Choose another name.";
+    return;
+  }
+
+  const pose = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    angles: [...angles]
+  };
+
+  savedPoses.push(pose);
+
+  if (!persistSavedPoses()) {
+    savedPoses.pop();
+    return;
+  }
+
+  renderSavedPoses();
+  $("poseName").value = "";
+  $("controlMessage").textContent =
+    `Saved "${name}" in this browser. Simulation only.`;
+}
+
+function loadPose(id) {
+  const pose = savedPoses.find((item) => item.id === id);
+  if (!pose) return;
+
+  angles = [...pose.angles];
+  renderJoints();
+
+  $("controlMessage").textContent =
+    `Loaded "${pose.name}". No physical movement occurred.`;
+}
+
+function deletePose(id) {
+  const pose = savedPoses.find((item) => item.id === id);
+  if (!pose) return;
+
+  savedPoses = savedPoses.filter((item) => item.id !== id);
+
+  if (!persistSavedPoses()) {
+    savedPoses.push(pose);
+    return;
+  }
+
+  renderSavedPoses();
+  $("controlMessage").textContent =
+    `Deleted "${pose.name}".`;
 }
 
 async function refreshStatus() {
@@ -108,8 +249,24 @@ async function refreshStatus() {
     }
 
     const data = await response.json();
-    updateStatus(data);
-  } catch (error) {
+    const online = data.system === "online";
+
+    $("systemStatus").textContent =
+      online ? "Server Online" : "Server Offline";
+    $("systemCard").textContent = online ? "Online" : "Offline";
+
+    $("arduinoStatus").textContent =
+      data.arduino === "connected" ? "Connected" : "Disconnected";
+    $("arduinoCard").textContent =
+      data.arduino === "connected" ? "Connected" : "Offline";
+
+    $("cameraCard").textContent = data.camera || "Unknown";
+
+    setDot($("systemDot"), online ? "online" : "offline");
+
+    $("lastUpdated").textContent =
+      `Last updated: ${new Date().toLocaleTimeString()}`;
+  } catch {
     $("systemStatus").textContent = "Server Unavailable";
     $("systemCard").textContent = "Offline";
     setDot($("systemDot"), "offline");
@@ -139,18 +296,13 @@ $("applyBtn").addEventListener("click", () => {
     `Simulation positions applied: ${angles.join("°, ")}°. No robot movement occurred.`;
 });
 
-$("startBtn").addEventListener("click", () => {
-  setOperation("Running");
-});
+$("startBtn").addEventListener("click", () => setOperation("Running"));
+$("pauseBtn").addEventListener("click", () => setOperation("Paused"));
+$("stopBtn").addEventListener("click", () => setOperation("Stopped"));
 
-$("pauseBtn").addEventListener("click", () => {
-  setOperation("Paused");
-});
-
-$("stopBtn").addEventListener("click", () => {
-  setOperation("Stopped");
-});
+$("savePoseForm").addEventListener("submit", savePose);
 
 renderJoints();
+renderSavedPoses();
 refreshStatus();
 setInterval(refreshStatus, 5000);

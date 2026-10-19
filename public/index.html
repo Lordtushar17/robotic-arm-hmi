@@ -109,6 +109,44 @@
           <p id="operationStatus" class="feedback" aria-live="polite">
             Simulation idle
           </p>
+          
+<div class="pose-section">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">PRESETS</p>
+      <h2>Saved Poses</h2>
+    </div>
+    <span class="small" id="poseCount">0 saved</span>
+  </div>
+
+  <p class="muted">
+    Save the current five joint values for reuse in simulation mode.
+  </p>
+
+  <form id="savePoseForm" class="pose-form">
+    <label for="poseName">Pose name</label>
+    <div class="pose-input-row">
+      <input
+        id="poseName"
+        name="poseName"
+        type="text"
+        maxlength="40"
+        placeholder="e.g. Pick Position"
+        required
+      >
+      <button class="btn btn-primary" type="submit">Save Pose</button>
+    </div>
+  </form>
+
+  <div id="savedPoses" class="saved-poses" aria-live="polite">
+    <p class="muted">No poses saved yet.</p>
+  </div>
+
+  <p class="small">
+    Simulation only. Saving or loading a pose does not move the physical arm.
+  </p>
+</div>
+
         </article>
 
         <article class="panel">
