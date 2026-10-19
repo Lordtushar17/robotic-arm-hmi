@@ -8,43 +8,51 @@ const jointNames = [
 ];
 
 const DEFAULT_ANGLES = [90, 90, 90, 90, 90];
-const STORAGE_KEY = "roboticArmSavedPoses";
 
 let angles = [...DEFAULT_ANGLES];
 let operation = "Idle";
-let savedPoses = loadSavedPoses();
+let savedPoses = [];
+let posesLoading = false;
 
 const $ = (id) => document.getElementById(id);
 
-function loadSavedPoses() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    ...options,
+    headers: {
+      ...(options.headers || {})
+    }
+  });
 
-    if (!Array.isArray(stored)) return [];
+  const data = await response.json().catch(() => ({}));
 
-    return stored.filter((pose) =>
-      pose &&
-      typeof pose.id === "string" &&
-      typeof pose.name === "string" &&
-      Array.isArray(pose.angles) &&
-      pose.angles.length === 5 &&
-      pose.angles.every(
-        (angle) => Number.isInteger(angle) && angle >= 0 && angle <= 180
-      )
-    );
-  } catch {
-    return [];
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
   }
+
+  return data;
 }
 
-function persistSavedPoses() {
+async function refreshSavedPoses() {
+  posesLoading = true;
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPoses));
-    return true;
-  } catch {
+    const data = await apiRequest("/api/poses");
+    savedPoses = Array.isArray(data.poses) ? data.poses : [];
+    renderSavedPoses();
+  } catch (error) {
+    $("savedPoses").replaceChildren();
+
+    const message = document.createElement("p");
+    message.className = "muted";
+    message.textContent = "Could not load saved poses. Check the server connection.";
+    $("savedPoses").append(message);
+
     $("controlMessage").textContent =
-      "Could not save poses in this browser.";
-    return false;
+      `Could not load poses: ${error.message}`;
+  } finally {
+    posesLoading = false;
   }
 }
 
@@ -124,7 +132,9 @@ function renderSavedPoses() {
   if (savedPoses.length === 0) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "No poses saved yet.";
+    empty.textContent = posesLoading
+      ? "Loading saved poses..."
+      : "No poses saved yet.";
     container.append(empty);
     return;
   }
@@ -140,10 +150,9 @@ function renderSavedPoses() {
     name.textContent = pose.name;
 
     const values = document.createElement("span");
-    values.textContent =
-      pose.angles.map((angle, index) =>
-        `J${index + 1}: ${angle}°`
-      ).join(" · ");
+    values.textContent = pose.angles
+      .map((angle, index) => `J${index + 1}: ${angle}°`)
+      .join(" · ");
 
     info.append(name, values);
 
@@ -168,7 +177,7 @@ function renderSavedPoses() {
   });
 }
 
-function savePose(event) {
+async function savePose(event) {
   event.preventDefault();
 
   const name = $("poseName").value.trim();
@@ -192,23 +201,34 @@ function savePose(event) {
     return;
   }
 
-  const pose = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name,
-    angles: [...angles]
-  };
+  const submitButton = $("savePoseForm").querySelector(
+    'button[type="submit"]'
+  );
+  submitButton.disabled = true;
 
-  savedPoses.push(pose);
+  try {
+    const data = await apiRequest("/api/poses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        angles: [...angles]
+      })
+    });
 
-  if (!persistSavedPoses()) {
-    savedPoses.pop();
-    return;
+    await refreshSavedPoses();
+    $("poseName").value = "";
+
+    $("controlMessage").textContent =
+      `Saved "${name}" on the server. Simulation only.`;
+  } catch (error) {
+    $("controlMessage").textContent =
+      `Could not save pose: ${error.message}`;
+  } finally {
+    submitButton.disabled = false;
   }
-
-  renderSavedPoses();
-  $("poseName").value = "";
-  $("controlMessage").textContent =
-    `Saved "${name}" in this browser. Simulation only.`;
 }
 
 function loadPose(id) {
@@ -222,33 +242,28 @@ function loadPose(id) {
     `Loaded "${pose.name}". No physical movement occurred.`;
 }
 
-function deletePose(id) {
+async function deletePose(id) {
   const pose = savedPoses.find((item) => item.id === id);
   if (!pose) return;
 
-  savedPoses = savedPoses.filter((item) => item.id !== id);
+  try {
+    await apiRequest(`/api/poses/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    });
 
-  if (!persistSavedPoses()) {
-    savedPoses.push(pose);
-    return;
+    await refreshSavedPoses();
+
+    $("controlMessage").textContent =
+      `Deleted "${pose.name}" from the server.`;
+  } catch (error) {
+    $("controlMessage").textContent =
+      `Could not delete pose: ${error.message}`;
   }
-
-  renderSavedPoses();
-  $("controlMessage").textContent =
-    `Deleted "${pose.name}".`;
 }
 
 async function refreshStatus() {
   try {
-    const response = await fetch("/api/status", {
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error("Status request failed");
-    }
-
-    const data = await response.json();
+    const data = await apiRequest("/api/status");
     const online = data.system === "online";
 
     $("systemStatus").textContent =
@@ -304,5 +319,7 @@ $("savePoseForm").addEventListener("submit", savePose);
 
 renderJoints();
 renderSavedPoses();
+refreshSavedPoses();
 refreshStatus();
+
 setInterval(refreshStatus, 5000);
