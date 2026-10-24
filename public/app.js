@@ -326,11 +326,12 @@ setInterval(refreshStatus, 5000);
 
 
 
+
 /* =========================================================
-   CROSS-PLATFORM VOICE INPUT
-   Runs on Windows, phones, tablets and Raspberry Pi browsers.
-   The microphone belongs to the device running the browser.
-   Audio is recorded locally for now; transcription comes later.
+   CROSS-PLATFORM VOICE INPUT + WHISPER UPLOAD
+   Records in the browser, converts to WAV, and uploads
+   to the Raspberry Pi for local Whisper transcription.
+   Robot control remains simulation-only.
    ========================================================= */
 
 const micPermissionBtn = $("micPermissionBtn");
@@ -343,6 +344,10 @@ let activeRecorder = null;
 let activeStream = null;
 let recordedChunks = [];
 let recordingUrl = null;
+let transcriptionInProgress = false;
+
+const TARGET_SAMPLE_RATE = 16000;
+const MAX_RECORDING_SECONDS = 20;
 
 function setVoiceStatus(message) {
   if (voiceStatus) {
@@ -361,26 +366,23 @@ function resetTalkButton() {
   talkBtn.textContent = "🎙 Talk";
   talkBtn.classList.remove("btn-stop");
   talkBtn.classList.add("btn-primary");
-  talkBtn.disabled = !microphoneReady;
+  talkBtn.disabled = !microphoneReady || transcriptionInProgress;
 }
 
 function explainMicrophoneAvailability() {
-  // Microphone APIs require a secure browser context.
   if (!window.isSecureContext) {
     setVoiceStatus(
-      "Microphone access requires HTTPS on your phone. " +
-      "Open this HMI using HTTPS, or use localhost on this device."
+      "Microphone access requires HTTPS on your phone, " +
+      "or localhost on this device."
     );
     micPermissionBtn.disabled = true;
     talkBtn.disabled = true;
     return;
   }
 
-  if (!navigator.mediaDevices ||
-      typeof navigator.mediaDevices.getUserMedia !== "function") {
+  if (!navigator.mediaDevices?.getUserMedia) {
     setVoiceStatus(
-      "This browser does not provide microphone access. " +
-      "Try an updated version of Chrome, Safari or Edge."
+      "Microphone access is unavailable. Try an updated browser."
     );
     micPermissionBtn.disabled = true;
     talkBtn.disabled = true;
@@ -389,8 +391,7 @@ function explainMicrophoneAvailability() {
 
   if (!window.MediaRecorder) {
     setVoiceStatus(
-      "Microphone access is available, but audio recording " +
-      "is not supported by this browser."
+      "This browser supports microphone access but not audio recording."
     );
     micPermissionBtn.disabled = false;
     talkBtn.disabled = true;
@@ -398,30 +399,66 @@ function explainMicrophoneAvailability() {
   }
 
   setVoiceStatus(
-    "Microphone support detected. Select Enable microphone " +
-    "and allow permission when your browser asks."
+    "Enable your microphone, record a short English command, " +
+    "and stop recording to send it to Whisper."
   );
+
   micPermissionBtn.disabled = false;
   talkBtn.disabled = true;
 }
 
-// Request permission only after the user presses the button.
-micPermissionBtn.addEventListener("click", async () => {
-  if (!window.isSecureContext) {
-    explainMicrophoneAvailability();
-    return;
-  }
+// Upload the original MediaRecorder audio. The Raspberry Pi uses FFmpeg
+// to convert browser-native WebM/MP4 audio into WAV before Whisper runs.
+async function sendAudioToWhisper(audioBlob) {
+  transcriptionInProgress = true;
+  talkBtn.disabled = true;
+  micPermissionBtn.disabled = true;
 
-  if (!navigator.mediaDevices?.getUserMedia) {
+  try {
+    const uploadType = audioBlob.type || "audio/webm";
+
+    setVoiceStatus(
+      `Recording ready (${Math.ceil(audioBlob.size / 1024)} KB). ` +
+      "Uploading to Raspberry Pi for speech recognition..."
+    );
+
+    const data = await apiRequest("/api/transcribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": uploadType
+      },
+      body: audioBlob
+    });
+
+    if (typeof data.transcript !== "string" || !data.transcript.trim()) {
+      throw new Error("Whisper returned an empty transcription.");
+    }
+
+    setVoiceStatus(`Recognized: "${data.transcript.trim()}"`);
+  } catch (error) {
+    setVoiceStatus(
+      `Transcription failed: ${error.message}. ` +
+      "Check the Raspberry Pi server and try a short recording again."
+    );
+  } finally {
+    transcriptionInProgress = false;
+    micPermissionBtn.disabled = false;
+    resetTalkButton();
+  }
+}
+
+// Request microphone permission only after a user action.
+micPermissionBtn.addEventListener("click", async () => {
+  if (!window.isSecureContext ||
+      !navigator.mediaDevices?.getUserMedia) {
     explainMicrophoneAvailability();
     return;
   }
 
   micPermissionBtn.disabled = true;
-  setVoiceStatus("Requesting microphone permission…");
+  setVoiceStatus("Requesting microphone permission...");
 
   try {
-    // Request access from the device running this browser.
     activeStream = await navigator.mediaDevices.getUserMedia({
       audio: true
     });
@@ -431,64 +468,36 @@ micPermissionBtn.addEventListener("click", async () => {
 
     talkBtn.disabled = false;
     setVoiceStatus(
-      "Microphone ready. Tap Talk, speak your command, " +
+      "Microphone ready. Tap Talk, speak in English, " +
       "then tap Stop recording."
     );
   } catch (error) {
     microphoneReady = false;
     talkBtn.disabled = true;
 
-    if (error.name === "NotAllowedError" ||
-        error.name === "PermissionDeniedError") {
-      setVoiceStatus(
-        "Microphone permission was denied or blocked. " +
-        "Allow microphone access in your browser/site settings " +
-        "and try again."
-      );
-    } else if (
-      error.name === "NotFoundError" ||
-      error.name === "DevicesNotFoundError"
-    ) {
-      setVoiceStatus(
-        "No usable microphone was found on this device. " +
-        "Connect or enable a microphone and try again."
-      );
-    } else if (
-      error.name === "NotReadableError" ||
-      error.name === "TrackStartError"
-    ) {
-      setVoiceStatus(
-        "The microphone could not be opened. It may be in use " +
-        "by another application or blocked by the operating system."
-      );
-    } else {
-      setVoiceStatus(
-        `Could not access the microphone: ${error.message || error.name}`
-      );
-    }
+    setVoiceStatus(
+      `Could not access microphone: ${error.message || error.name}`
+    );
   } finally {
     micPermissionBtn.disabled = false;
   }
 });
 
 talkBtn.addEventListener("click", async () => {
-  // Stop an existing recording.
   if (activeRecorder?.state === "recording") {
     activeRecorder.stop();
     talkBtn.disabled = true;
-    setVoiceStatus("Finishing recording…");
+    setVoiceStatus("Finishing recording...");
     return;
   }
 
-  if (!microphoneReady) {
-    setVoiceStatus("Enable microphone access before recording.");
+  if (!microphoneReady || transcriptionInProgress) {
     return;
   }
 
   if (!window.isSecureContext ||
       !navigator.mediaDevices?.getUserMedia ||
       !window.MediaRecorder) {
-    microphoneReady = false;
     explainMicrophoneAvailability();
     return;
   }
@@ -514,14 +523,18 @@ talkBtn.addEventListener("click", async () => {
       ? new MediaRecorder(activeStream, { mimeType })
       : new MediaRecorder(activeStream);
 
-    activeRecorder.addEventListener("dataavailable", (event) => {
-      if (event.data && event.data.size > 0) {
+    const recorder = activeRecorder;
+
+    const recordingStartedAt = Date.now();
+
+    recorder.addEventListener("dataavailable", (event) => {
+      if (event.data?.size > 0) {
         recordedChunks.push(event.data);
       }
     });
 
-    activeRecorder.addEventListener("stop", () => {
-      const actualType = activeRecorder.mimeType || "audio/webm";
+    recorder.addEventListener("stop", async () => {
+      const actualType = recorder.mimeType || "audio/webm";
       const audioBlob = new Blob(recordedChunks, {
         type: actualType
       });
@@ -538,33 +551,43 @@ talkBtn.addEventListener("click", async () => {
         URL.revokeObjectURL(recordingUrl);
       }
 
+      // Keep local playback available, as in the original HMI.
       recordingUrl = URL.createObjectURL(audioBlob);
       recordingPreview.src = recordingUrl;
       recordingPreview.hidden = false;
 
-      const sizeKb = Math.max(1, Math.round(audioBlob.size / 1024));
+      const durationSeconds =
+        (Date.now() - recordingStartedAt) / 1000;
 
-      setVoiceStatus(
-        `Recording complete (${sizeKb} KB). Playback is available below. ` +
-        "Audio has not yet been sent to the speech-recognition model."
-      );
+      if (durationSeconds > MAX_RECORDING_SECONDS) {
+        setVoiceStatus(
+          `Recording was ${Math.ceil(durationSeconds)} seconds. ` +
+          `Please keep commands under ${MAX_RECORDING_SECONDS} seconds.`
+        );
+        return;
+      }
+
+      await sendAudioToWhisper(audioBlob);
     }, { once: true });
 
-    activeRecorder.addEventListener("error", (event) => {
+    recorder.addEventListener("error", (event) => {
       stopMicrophoneTracks();
       resetTalkButton();
 
       setVoiceStatus(
-        `Recording failed: ${event.error?.message || "browser recorder error"}`
+        `Recording failed: ${
+          event.error?.message || "browser recorder error"
+        }`
       );
     }, { once: true });
 
-    activeRecorder.start();
+    recorder.start();
 
     talkBtn.textContent = "■ Stop recording";
     talkBtn.classList.remove("btn-primary");
     talkBtn.classList.add("btn-stop");
-    setVoiceStatus("Recording… speak now, then tap Stop recording.");
+
+    setVoiceStatus("Recording... speak your English command.");
   } catch (error) {
     stopMicrophoneTracks();
     resetTalkButton();
@@ -575,11 +598,8 @@ talkBtn.addEventListener("click", async () => {
   }
 });
 
-// Detect capabilities on the device opening the page.
-// Do not request permission automatically on page load.
 explainMicrophoneAvailability();
 
-// Release any generated playback URL when leaving the page.
 window.addEventListener("pagehide", () => {
   stopMicrophoneTracks();
 
