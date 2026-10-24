@@ -325,8 +325,14 @@ refreshStatus();
 setInterval(refreshStatus, 5000);
 
 
-// Voice input: request microphone permission and record a short browser-side clip.
-// The recording is only previewed locally at this stage; it is not uploaded to the server.
+
+/* =========================================================
+   CROSS-PLATFORM VOICE INPUT
+   Runs on Windows, phones, tablets and Raspberry Pi browsers.
+   The microphone belongs to the device running the browser.
+   Audio is recorded locally for now; transcription comes later.
+   ========================================================= */
+
 const micPermissionBtn = $("micPermissionBtn");
 const talkBtn = $("talkBtn");
 const voiceStatus = $("voiceStatus");
@@ -339,7 +345,9 @@ let recordedChunks = [];
 let recordingUrl = null;
 
 function setVoiceStatus(message) {
-  voiceStatus.textContent = message;
+  if (voiceStatus) {
+    voiceStatus.textContent = message;
+  }
 }
 
 function stopMicrophoneTracks() {
@@ -349,31 +357,114 @@ function stopMicrophoneTracks() {
   }
 }
 
+function resetTalkButton() {
+  talkBtn.textContent = "🎙 Talk";
+  talkBtn.classList.remove("btn-stop");
+  talkBtn.classList.add("btn-primary");
+  talkBtn.disabled = !microphoneReady;
+}
+
+function explainMicrophoneAvailability() {
+  // Microphone APIs require a secure browser context.
+  if (!window.isSecureContext) {
+    setVoiceStatus(
+      "Microphone access requires HTTPS on your phone. " +
+      "Open this HMI using HTTPS, or use localhost on this device."
+    );
+    micPermissionBtn.disabled = true;
+    talkBtn.disabled = true;
+    return;
+  }
+
+  if (!navigator.mediaDevices ||
+      typeof navigator.mediaDevices.getUserMedia !== "function") {
+    setVoiceStatus(
+      "This browser does not provide microphone access. " +
+      "Try an updated version of Chrome, Safari or Edge."
+    );
+    micPermissionBtn.disabled = true;
+    talkBtn.disabled = true;
+    return;
+  }
+
+  if (!window.MediaRecorder) {
+    setVoiceStatus(
+      "Microphone access is available, but audio recording " +
+      "is not supported by this browser."
+    );
+    micPermissionBtn.disabled = false;
+    talkBtn.disabled = true;
+    return;
+  }
+
+  setVoiceStatus(
+    "Microphone support detected. Select Enable microphone " +
+    "and allow permission when your browser asks."
+  );
+  micPermissionBtn.disabled = false;
+  talkBtn.disabled = true;
+}
+
+// Request permission only after the user presses the button.
 micPermissionBtn.addEventListener("click", async () => {
+  if (!window.isSecureContext) {
+    explainMicrophoneAvailability();
+    return;
+  }
+
   if (!navigator.mediaDevices?.getUserMedia) {
-    setVoiceStatus("Microphone access is unavailable. Open this page over HTTPS or localhost in a supported browser.");
+    explainMicrophoneAvailability();
     return;
   }
 
   micPermissionBtn.disabled = true;
-  setVoiceStatus("Waiting for microphone permission…");
+  setVoiceStatus("Requesting microphone permission…");
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach((track) => track.stop());
+    // Request access from the device running this browser.
+    activeStream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
     microphoneReady = true;
+    stopMicrophoneTracks();
+
     talkBtn.disabled = false;
-    setVoiceStatus("Microphone ready. Tap Talk and speak a short command.");
+    setVoiceStatus(
+      "Microphone ready. Tap Talk, speak your command, " +
+      "then tap Stop recording."
+    );
   } catch (error) {
     microphoneReady = false;
     talkBtn.disabled = true;
 
-    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-      setVoiceStatus("Microphone permission was denied. Allow microphone access in your browser's site settings, then try again.");
-    } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-      setVoiceStatus("No microphone was found on this device.");
+    if (error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError") {
+      setVoiceStatus(
+        "Microphone permission was denied or blocked. " +
+        "Allow microphone access in your browser/site settings " +
+        "and try again."
+      );
+    } else if (
+      error.name === "NotFoundError" ||
+      error.name === "DevicesNotFoundError"
+    ) {
+      setVoiceStatus(
+        "No usable microphone was found on this device. " +
+        "Connect or enable a microphone and try again."
+      );
+    } else if (
+      error.name === "NotReadableError" ||
+      error.name === "TrackStartError"
+    ) {
+      setVoiceStatus(
+        "The microphone could not be opened. It may be in use " +
+        "by another application or blocked by the operating system."
+      );
     } else {
-      setVoiceStatus(`Could not access the microphone: ${error.message || "unknown error"}`);
+      setVoiceStatus(
+        `Could not access the microphone: ${error.message || error.name}`
+      );
     }
   } finally {
     micPermissionBtn.disabled = false;
@@ -381,70 +472,119 @@ micPermissionBtn.addEventListener("click", async () => {
 });
 
 talkBtn.addEventListener("click", async () => {
+  // Stop an existing recording.
   if (activeRecorder?.state === "recording") {
     activeRecorder.stop();
-    talkBtn.textContent = "🎙 Talk";
-    talkBtn.classList.remove("btn-stop");
-    talkBtn.classList.add("btn-primary");
     talkBtn.disabled = true;
     setVoiceStatus("Finishing recording…");
     return;
   }
 
   if (!microphoneReady) {
-    setVoiceStatus("Please enable microphone access first.");
+    setVoiceStatus("Enable microphone access before recording.");
+    return;
+  }
+
+  if (!window.isSecureContext ||
+      !navigator.mediaDevices?.getUserMedia ||
+      !window.MediaRecorder) {
+    microphoneReady = false;
+    explainMicrophoneAvailability();
     return;
   }
 
   try {
-    activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    if (!window.MediaRecorder) {
-      stopMicrophoneTracks();
-      setVoiceStatus("Audio recording is not supported by this browser.");
-      return;
-    }
+    activeStream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
 
     recordedChunks = [];
-    const preferredMimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
-    const mimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type));
+
+    const supportedTypes = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4"
+    ];
+
+    const mimeType = supportedTypes.find((type) =>
+      MediaRecorder.isTypeSupported(type)
+    );
+
     activeRecorder = mimeType
       ? new MediaRecorder(activeStream, { mimeType })
       : new MediaRecorder(activeStream);
 
     activeRecorder.addEventListener("dataavailable", (event) => {
-      if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+      if (event.data && event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
     });
 
     activeRecorder.addEventListener("stop", () => {
       const actualType = activeRecorder.mimeType || "audio/webm";
-      const audioBlob = new Blob(recordedChunks, { type: actualType });
-      stopMicrophoneTracks();
-      talkBtn.disabled = false;
+      const audioBlob = new Blob(recordedChunks, {
+        type: actualType
+      });
 
-      if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+      stopMicrophoneTracks();
+      resetTalkButton();
+
+      if (audioBlob.size === 0) {
+        setVoiceStatus("No audio was recorded. Please try again.");
+        return;
+      }
+
+      if (recordingUrl) {
+        URL.revokeObjectURL(recordingUrl);
+      }
+
       recordingUrl = URL.createObjectURL(audioBlob);
       recordingPreview.src = recordingUrl;
       recordingPreview.hidden = false;
 
       const sizeKb = Math.max(1, Math.round(audioBlob.size / 1024));
-      setVoiceStatus(`Recording ready (${sizeKb} KB). You can play it back below. It has not been sent to Whistle yet.`);
+
+      setVoiceStatus(
+        `Recording complete (${sizeKb} KB). Playback is available below. ` +
+        "Audio has not yet been sent to the speech-recognition model."
+      );
     }, { once: true });
 
     activeRecorder.addEventListener("error", (event) => {
       stopMicrophoneTracks();
-      talkBtn.disabled = false;
-      talkBtn.textContent = "🎙 Talk";
-      setVoiceStatus(`Recording failed: ${event.error?.message || "browser recorder error"}`);
+      resetTalkButton();
+
+      setVoiceStatus(
+        `Recording failed: ${event.error?.message || "browser recorder error"}`
+      );
     }, { once: true });
 
     activeRecorder.start();
+
     talkBtn.textContent = "■ Stop recording";
     talkBtn.classList.remove("btn-primary");
     talkBtn.classList.add("btn-stop");
-    setVoiceStatus("Recording… tap Stop recording when you finish speaking.");
+    setVoiceStatus("Recording… speak now, then tap Stop recording.");
   } catch (error) {
     stopMicrophoneTracks();
-    setVoiceStatus(`Could not start recording: ${error.message || "unknown error"}`);
+    resetTalkButton();
+
+    setVoiceStatus(
+      `Could not start recording: ${error.message || error.name}`
+    );
+  }
+});
+
+// Detect capabilities on the device opening the page.
+// Do not request permission automatically on page load.
+explainMicrophoneAvailability();
+
+// Release any generated playback URL when leaving the page.
+window.addEventListener("pagehide", () => {
+  stopMicrophoneTracks();
+
+  if (recordingUrl) {
+    URL.revokeObjectURL(recordingUrl);
+    recordingUrl = null;
   }
 });
