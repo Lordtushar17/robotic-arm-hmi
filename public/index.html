@@ -39,6 +39,31 @@
       </div>
     </section>
 
+
+    <section class="hero-stage panel" aria-label="Robotic arm visual overview">
+      <div class="hero-copy">
+        <p class="eyebrow">ROBOTICS / LIVE WORKSPACE</p>
+        <h2>Precision in every move.</h2>
+        <p class="muted">A local control workspace for voice input, saved poses and safe simulation.</p>
+        <div class="hero-chips"><span><i class="chip-dot"></i> Local inference</span><span><i class="chip-dot chip-cyan"></i> Voice interface</span><span><i class="chip-dot chip-amber"></i> Hardware locked</span></div>
+      </div>
+      <div class="robot-visual" aria-hidden="true">
+        <div class="robot-orbit orbit-one"></div><div class="robot-orbit orbit-two"></div>
+        <div class="robot-grid"></div>
+        <div class="robot-arm">
+          <div class="robot-base"><span></span></div>
+          <div class="robot-joint joint-shoulder"><div class="robot-link link-upper"><span class="link-highlight"></span></div>
+            <div class="robot-joint joint-elbow"><div class="robot-link link-forearm"><span class="link-highlight"></span></div>
+              <div class="robot-joint joint-wrist"><div class="robot-tool"><i></i><b></b></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="robot-readout readout-a"><span>J1</span><b>090°</b></div>
+        <div class="robot-readout readout-b"><span>MODE</span><b>SIM</b></div>
+        <div class="robot-stage-caption"><span class="status-dot status-green"></span> DIGITAL TWIN <span>·</span> PREVIEW ONLY</div>
+      </div>
+    </section>
+
     <section class="status-grid">
       <article class="panel status-card">
         <span class="card-label">System</span>
@@ -74,6 +99,7 @@
       </div>
       <div class="voice-feedback" id="voiceFeedback" aria-busy="false">
         <span class="voice-loader" id="voiceLoader" aria-hidden="true" hidden></span>
+        <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <p id="voiceStatus" class="feedback voice-status" aria-live="polite">Microphone permission is required before recording.</p>
       </div>
       <audio id="recordingPreview" class="recording-preview" controls hidden></audio>

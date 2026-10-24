@@ -46,7 +46,8 @@ async function refreshSavedPoses() {
 
     const message = document.createElement("p");
     message.className = "muted";
-    message.textContent = "Could not load saved poses. Check the server connection.";
+    message.textContent =
+      "Could not load saved poses. Check the server connection.";
     $("savedPoses").append(message);
 
     $("controlMessage").textContent =
@@ -57,6 +58,8 @@ async function refreshSavedPoses() {
 }
 
 function setDot(element, state) {
+  if (!element) return;
+
   element.className = "status-dot";
 
   if (state === "online") {
@@ -70,6 +73,8 @@ function setDot(element, state) {
 
 function renderJoints() {
   const container = $("jointControls");
+  if (!container) return;
+
   container.replaceChildren();
 
   jointNames.forEach((name, index) => {
@@ -103,6 +108,7 @@ function renderJoints() {
     slider.addEventListener("input", () => {
       angles[index] = Number(slider.value);
       value.textContent = `${angles[index]}°`;
+
       $("controlMessage").textContent =
         "Position changed locally. Press Apply Positions to confirm.";
     });
@@ -124,10 +130,14 @@ function renderJoints() {
 
 function renderSavedPoses() {
   const container = $("savedPoses");
+  if (!container) return;
+
   container.replaceChildren();
 
-  $("poseCount").textContent =
-    `${savedPoses.length} saved`;
+  const poseCount = $("poseCount");
+  if (poseCount) {
+    poseCount.textContent = `${savedPoses.length} saved`;
+  }
 
   if (savedPoses.length === 0) {
     const empty = document.createElement("p");
@@ -135,6 +145,7 @@ function renderSavedPoses() {
     empty.textContent = posesLoading
       ? "Loading saved poses..."
       : "No poses saved yet.";
+
     container.append(empty);
     return;
   }
@@ -193,9 +204,11 @@ async function savePose(event) {
     return;
   }
 
-  if (savedPoses.some((pose) =>
-    pose.name.toLowerCase() === name.toLowerCase()
-  )) {
+  if (
+    savedPoses.some(
+      (pose) => pose.name.toLowerCase() === name.toLowerCase()
+    )
+  ) {
     $("controlMessage").textContent =
       "A pose with that name already exists. Choose another name.";
     return;
@@ -204,10 +217,11 @@ async function savePose(event) {
   const submitButton = $("savePoseForm").querySelector(
     'button[type="submit"]'
   );
+
   submitButton.disabled = true;
 
   try {
-    const data = await apiRequest("/api/poses", {
+    await apiRequest("/api/poses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -268,10 +282,12 @@ async function refreshStatus() {
 
     $("systemStatus").textContent =
       online ? "Server Online" : "Server Offline";
+
     $("systemCard").textContent = online ? "Online" : "Offline";
 
     $("arduinoStatus").textContent =
       data.arduino === "connected" ? "Connected" : "Disconnected";
+
     $("arduinoCard").textContent =
       data.arduino === "connected" ? "Connected" : "Offline";
 
@@ -284,8 +300,11 @@ async function refreshStatus() {
   } catch {
     $("systemStatus").textContent = "Server Unavailable";
     $("systemCard").textContent = "Offline";
+
     setDot($("systemDot"), "offline");
-    $("lastUpdated").textContent = "Unable to fetch server status";
+
+    $("lastUpdated").textContent =
+      "Unable to fetch server status";
   }
 }
 
@@ -325,13 +344,15 @@ refreshStatus();
 setInterval(refreshStatus, 5000);
 
 
-
-
 /* =========================================================
    CROSS-PLATFORM VOICE INPUT + WHISPER UPLOAD
-   Records in the browser, converts to WAV, and uploads
-   to the Raspberry Pi for local Whisper transcription.
-   Robot control remains simulation-only.
+
+   Records audio in the browser and uploads it to the
+   Raspberry Pi for local Whisper transcription.
+
+   IMPORTANT:
+   Transcription is implemented, but voice commands do not
+   yet control the physical robotic arm.
    ========================================================= */
 
 const micPermissionBtn = $("micPermissionBtn");
@@ -346,7 +367,6 @@ let recordedChunks = [];
 let recordingUrl = null;
 let transcriptionInProgress = false;
 
-const TARGET_SAMPLE_RATE = 16000;
 const MAX_RECORDING_SECONDS = 20;
 
 function setVoiceStatus(message, options = {}) {
@@ -358,13 +378,20 @@ function setVoiceStatus(message, options = {}) {
   const loader = $("voiceLoader");
   const feedback = $("voiceFeedback");
 
-  if (loader) loader.hidden = !isBusy;
-  if (feedback) feedback.setAttribute("aria-busy", String(isBusy));
+  if (loader) {
+    loader.hidden = !isBusy;
+  }
 
-  if (isBusy) {
-    voiceStatus?.classList.add("is-processing");
-  } else {
-    voiceStatus?.classList.remove("is-processing");
+  if (feedback) {
+    feedback.setAttribute("aria-busy", String(isBusy));
+
+    if (!isBusy) {
+      feedback.classList.remove("is-recording");
+    }
+  }
+
+  if (voiceStatus) {
+    voiceStatus.classList.toggle("is-processing", isBusy);
   }
 }
 
@@ -376,6 +403,8 @@ function stopMicrophoneTracks() {
 }
 
 function resetTalkButton() {
+  if (!talkBtn) return;
+
   talkBtn.textContent = "🎙 Talk";
   talkBtn.classList.remove("btn-stop", "btn-processing");
   talkBtn.classList.add("btn-primary");
@@ -388,6 +417,7 @@ function explainMicrophoneAvailability() {
       "Microphone access requires HTTPS on your phone, " +
       "or localhost on this device."
     );
+
     micPermissionBtn.disabled = true;
     talkBtn.disabled = true;
     return;
@@ -397,6 +427,7 @@ function explainMicrophoneAvailability() {
     setVoiceStatus(
       "Microphone access is unavailable. Try an updated browser."
     );
+
     micPermissionBtn.disabled = true;
     talkBtn.disabled = true;
     return;
@@ -406,6 +437,7 @@ function explainMicrophoneAvailability() {
     setVoiceStatus(
       "This browser supports microphone access but not audio recording."
     );
+
     micPermissionBtn.disabled = false;
     talkBtn.disabled = true;
     return;
@@ -420,12 +452,13 @@ function explainMicrophoneAvailability() {
   talkBtn.disabled = true;
 }
 
-// Upload the original MediaRecorder audio. The Raspberry Pi uses FFmpeg
-// to convert browser-native WebM/MP4 audio into WAV before Whisper runs.
+// Upload browser-recorded audio to the Raspberry Pi.
+// The server uses FFmpeg to convert the audio for Whisper.
 async function sendAudioToWhisper(audioBlob) {
   transcriptionInProgress = true;
   talkBtn.disabled = true;
   micPermissionBtn.disabled = true;
+
   talkBtn.textContent = "Processing…";
   talkBtn.classList.remove("btn-primary", "btn-stop");
   talkBtn.classList.add("btn-processing");
@@ -434,7 +467,10 @@ async function sendAudioToWhisper(audioBlob) {
     const uploadType = audioBlob.type || "audio/webm";
 
     setVoiceStatus(
-      `Processing your ${Math.max(1, Math.round(audioBlob.size / 1024))} KB recording. Uploading audio and running speech recognition on the Raspberry Pi…`,
+      `Processing your ${Math.max(
+        1,
+        Math.round(audioBlob.size / 1024)
+      )} KB recording. Uploading audio and running speech recognition on the Raspberry Pi…`,
       { busy: true }
     );
 
@@ -446,7 +482,10 @@ async function sendAudioToWhisper(audioBlob) {
       body: audioBlob
     });
 
-    if (typeof data.transcript !== "string" || !data.transcript.trim()) {
+    if (
+      typeof data.transcript !== "string" ||
+      !data.transcript.trim()
+    ) {
       throw new Error("Whisper returned an empty transcription.");
     }
 
@@ -460,17 +499,20 @@ async function sendAudioToWhisper(audioBlob) {
     transcriptionInProgress = false;
     micPermissionBtn.disabled = false;
     resetTalkButton();
+
     if (voiceStatus?.textContent.includes("Processing your")) {
       setVoiceStatus("Ready for your next command.");
     }
   }
 }
 
-// Request microphone permission only after a user action.
+// Request microphone permission after a user clicks the button.
 micPermissionBtn.addEventListener("click", async () => {
-  if (!window.isSecureContext ||
-      !navigator.mediaDevices?.getUserMedia) {
-    
+  if (
+    !window.isSecureContext ||
+    !navigator.mediaDevices?.getUserMedia
+  ) {
+    explainMicrophoneAvailability();
     return;
   }
 
@@ -486,6 +528,7 @@ micPermissionBtn.addEventListener("click", async () => {
     stopMicrophoneTracks();
 
     talkBtn.disabled = false;
+
     setVoiceStatus(
       "Microphone ready. Tap Talk, speak in English, " +
       "then tap Stop recording."
@@ -503,6 +546,7 @@ micPermissionBtn.addEventListener("click", async () => {
 });
 
 talkBtn.addEventListener("click", async () => {
+  // Stop the current recording when Talk is clicked again.
   if (activeRecorder?.state === "recording") {
     activeRecorder.stop();
     talkBtn.disabled = true;
@@ -514,9 +558,11 @@ talkBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (!window.isSecureContext ||
-      !navigator.mediaDevices?.getUserMedia ||
-      !window.MediaRecorder) {
+  if (
+    !window.isSecureContext ||
+    !navigator.mediaDevices?.getUserMedia ||
+    !window.MediaRecorder
+  ) {
     explainMicrophoneAvailability();
     return;
   }
@@ -543,7 +589,6 @@ talkBtn.addEventListener("click", async () => {
       : new MediaRecorder(activeStream);
 
     const recorder = activeRecorder;
-
     const recordingStartedAt = Date.now();
 
     recorder.addEventListener("dataavailable", (event) => {
@@ -552,60 +597,75 @@ talkBtn.addEventListener("click", async () => {
       }
     });
 
-    recorder.addEventListener("stop", async () => {
-      const actualType = recorder.mimeType || "audio/webm";
-      const audioBlob = new Blob(recordedChunks, {
-        type: actualType
-      });
+    recorder.addEventListener(
+      "stop",
+      async () => {
+        const actualType = recorder.mimeType || "audio/webm";
 
-      stopMicrophoneTracks();
+        const audioBlob = new Blob(recordedChunks, {
+          type: actualType
+        });
 
-      if (audioBlob.size === 0) {
+        stopMicrophoneTracks();
+
+        if (audioBlob.size === 0) {
+          resetTalkButton();
+          setVoiceStatus("No audio was recorded. Please try again.");
+          return;
+        }
+
+        if (recordingUrl) {
+          URL.revokeObjectURL(recordingUrl);
+        }
+
+        recordingUrl = URL.createObjectURL(audioBlob);
+
+        if (recordingPreview) {
+          recordingPreview.src = recordingUrl;
+          recordingPreview.hidden = false;
+        }
+
+        const durationSeconds =
+          (Date.now() - recordingStartedAt) / 1000;
+
+        if (durationSeconds > MAX_RECORDING_SECONDS) {
+          resetTalkButton();
+
+          setVoiceStatus(
+            `Recording was ${Math.ceil(durationSeconds)} seconds. ` +
+            `Please keep commands under ${MAX_RECORDING_SECONDS} seconds.`
+          );
+
+          return;
+        }
+
+        await sendAudioToWhisper(audioBlob);
+      },
+      { once: true }
+    );
+
+    recorder.addEventListener(
+      "error",
+      (event) => {
+        stopMicrophoneTracks();
         resetTalkButton();
-        setVoiceStatus("No audio was recorded. Please try again.");
-        return;
-      }
 
-      if (recordingUrl) {
-        URL.revokeObjectURL(recordingUrl);
-      }
-
-      // Keep local playback available, as in the original HMI.
-      recordingUrl = URL.createObjectURL(audioBlob);
-      recordingPreview.src = recordingUrl;
-      recordingPreview.hidden = false;
-
-      const durationSeconds =
-        (Date.now() - recordingStartedAt) / 1000;
-
-      if (durationSeconds > MAX_RECORDING_SECONDS) {
-        resetTalkButton();
         setVoiceStatus(
-          `Recording was ${Math.ceil(durationSeconds)} seconds. ` +
-          `Please keep commands under ${MAX_RECORDING_SECONDS} seconds.`
+          `Recording failed: ${
+            event.error?.message || "browser recorder error"
+          }`
         );
-        return;
-      }
-
-      await sendAudioToWhisper(audioBlob);
-    }, { once: true });
-
-    recorder.addEventListener("error", (event) => {
-      stopMicrophoneTracks();
-      resetTalkButton();
-
-      setVoiceStatus(
-        `Recording failed: ${
-          event.error?.message || "browser recorder error"
-        }`
-      );
-    }, { once: true });
+      },
+      { once: true }
+    );
 
     recorder.start();
 
     talkBtn.textContent = "■ Stop recording";
     talkBtn.classList.remove("btn-primary");
     talkBtn.classList.add("btn-stop");
+
+    $("voiceFeedback")?.classList.add("is-recording");
 
     setVoiceStatus("Recording... speak your English command.");
   } catch (error) {
@@ -618,37 +678,78 @@ talkBtn.addEventListener("click", async () => {
   }
 });
 
-// Theme preference is stored locally in this browser; no server changes needed.
+
+/* =========================================================
+   THEME SWITCHER
+   Saves the user's light/dark preference in this browser.
+   ========================================================= */
+
 const themeToggle = $("themeToggle");
 const themeIcon = $("themeIcon");
 const themeLabel = $("themeLabel");
 
 function applyTheme(theme) {
   const dark = theme === "dark";
+
   document.documentElement.dataset.theme = dark ? "dark" : "light";
-  if (themeIcon) themeIcon.textContent = dark ? "☀" : "☾";
-  if (themeLabel) themeLabel.textContent = dark ? "Light mode" : "Dark mode";
-  if (themeToggle) {
-    themeToggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
-    themeToggle.title = dark ? "Switch to light theme" : "Switch to dark theme";
+
+  if (themeIcon) {
+    themeIcon.textContent = dark ? "☀" : "☾";
   }
-  const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = dark ? "#0b1220" : "#f4f7fb";
+
+  if (themeLabel) {
+    themeLabel.textContent = dark ? "Light mode" : "Dark mode";
+  }
+
+  if (themeToggle) {
+    themeToggle.setAttribute(
+      "aria-label",
+      dark ? "Switch to light theme" : "Switch to dark theme"
+    );
+
+    themeToggle.title = dark
+      ? "Switch to light theme"
+      : "Switch to dark theme";
+  }
+
+  const themeColor = document.querySelector(
+    'meta[name="theme-color"]'
+  );
+
+  if (themeColor) {
+    themeColor.content = dark ? "#0b1220" : "#f4f7fb";
+  }
 }
 
 let savedTheme = "light";
+
 try {
   savedTheme = localStorage.getItem("robotic-arm-theme") || "light";
-} catch {}
+} catch {
+  // Continue with the default theme if local storage is unavailable.
+}
+
 applyTheme(savedTheme);
 
 themeToggle?.addEventListener("click", () => {
-  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  const nextTheme =
+    document.documentElement.dataset.theme === "dark"
+      ? "light"
+      : "dark";
+
   applyTheme(nextTheme);
+
   try {
     localStorage.setItem("robotic-arm-theme", nextTheme);
-  } catch {}
+  } catch {
+    // The theme still changes for this page even if saving fails.
+  }
 });
+
+
+/* =========================================================
+   INITIALIZATION AND CLEANUP
+   ========================================================= */
 
 explainMicrophoneAvailability();
 
