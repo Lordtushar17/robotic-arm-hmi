@@ -349,9 +349,22 @@ let transcriptionInProgress = false;
 const TARGET_SAMPLE_RATE = 16000;
 const MAX_RECORDING_SECONDS = 20;
 
-function setVoiceStatus(message) {
+function setVoiceStatus(message, options = {}) {
   if (voiceStatus) {
     voiceStatus.textContent = message;
+  }
+
+  const isBusy = Boolean(options.busy);
+  const loader = $("voiceLoader");
+  const feedback = $("voiceFeedback");
+
+  if (loader) loader.hidden = !isBusy;
+  if (feedback) feedback.setAttribute("aria-busy", String(isBusy));
+
+  if (isBusy) {
+    voiceStatus?.classList.add("is-processing");
+  } else {
+    voiceStatus?.classList.remove("is-processing");
   }
 }
 
@@ -364,7 +377,7 @@ function stopMicrophoneTracks() {
 
 function resetTalkButton() {
   talkBtn.textContent = "🎙 Talk";
-  talkBtn.classList.remove("btn-stop");
+  talkBtn.classList.remove("btn-stop", "btn-processing");
   talkBtn.classList.add("btn-primary");
   talkBtn.disabled = !microphoneReady || transcriptionInProgress;
 }
@@ -413,13 +426,16 @@ async function sendAudioToWhisper(audioBlob) {
   transcriptionInProgress = true;
   talkBtn.disabled = true;
   micPermissionBtn.disabled = true;
+  talkBtn.textContent = "Processing…";
+  talkBtn.classList.remove("btn-primary", "btn-stop");
+  talkBtn.classList.add("btn-processing");
 
   try {
     const uploadType = audioBlob.type || "audio/webm";
 
     setVoiceStatus(
-      `Recording ready (${Math.ceil(audioBlob.size / 1024)} KB). ` +
-      "Uploading to Raspberry Pi for speech recognition..."
+      `Processing your ${Math.max(1, Math.round(audioBlob.size / 1024))} KB recording. Uploading audio and running speech recognition on the Raspberry Pi…`,
+      { busy: true }
     );
 
     const data = await apiRequest("/api/transcribe", {
@@ -444,6 +460,9 @@ async function sendAudioToWhisper(audioBlob) {
     transcriptionInProgress = false;
     micPermissionBtn.disabled = false;
     resetTalkButton();
+    if (voiceStatus?.textContent.includes("Processing your")) {
+      setVoiceStatus("Ready for your next command.");
+    }
   }
 }
 
@@ -451,7 +470,7 @@ async function sendAudioToWhisper(audioBlob) {
 micPermissionBtn.addEventListener("click", async () => {
   if (!window.isSecureContext ||
       !navigator.mediaDevices?.getUserMedia) {
-    explainMicrophoneAvailability();
+    
     return;
   }
 
@@ -540,9 +559,9 @@ talkBtn.addEventListener("click", async () => {
       });
 
       stopMicrophoneTracks();
-      resetTalkButton();
 
       if (audioBlob.size === 0) {
+        resetTalkButton();
         setVoiceStatus("No audio was recorded. Please try again.");
         return;
       }
@@ -560,6 +579,7 @@ talkBtn.addEventListener("click", async () => {
         (Date.now() - recordingStartedAt) / 1000;
 
       if (durationSeconds > MAX_RECORDING_SECONDS) {
+        resetTalkButton();
         setVoiceStatus(
           `Recording was ${Math.ceil(durationSeconds)} seconds. ` +
           `Please keep commands under ${MAX_RECORDING_SECONDS} seconds.`
@@ -596,6 +616,38 @@ talkBtn.addEventListener("click", async () => {
       `Could not start recording: ${error.message || error.name}`
     );
   }
+});
+
+// Theme preference is stored locally in this browser; no server changes needed.
+const themeToggle = $("themeToggle");
+const themeIcon = $("themeIcon");
+const themeLabel = $("themeLabel");
+
+function applyTheme(theme) {
+  const dark = theme === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  if (themeIcon) themeIcon.textContent = dark ? "☀" : "☾";
+  if (themeLabel) themeLabel.textContent = dark ? "Light mode" : "Dark mode";
+  if (themeToggle) {
+    themeToggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    themeToggle.title = dark ? "Switch to light theme" : "Switch to dark theme";
+  }
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = dark ? "#0b1220" : "#f4f7fb";
+}
+
+let savedTheme = "light";
+try {
+  savedTheme = localStorage.getItem("robotic-arm-theme") || "light";
+} catch {}
+applyTheme(savedTheme);
+
+themeToggle?.addEventListener("click", () => {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme);
+  try {
+    localStorage.setItem("robotic-arm-theme", nextTheme);
+  } catch {}
 });
 
 explainMicrophoneAvailability();

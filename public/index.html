@@ -21,6 +21,7 @@
       <span class="status-dot" id="systemDot"></span>
       <span id="systemStatus">Connecting...</span>
       <span class="mode-tag">SIMULATION</span>
+       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark theme" title="Switch theme"><span id="themeIcon" aria-hidden="true">☾</span><span id="themeLabel">Dark mode</span></button>
     </div>
   </header>
 
@@ -71,7 +72,10 @@
         <button class="btn btn-secondary" id="micPermissionBtn" type="button">Enable microphone</button>
         <button class="btn btn-primary" id="talkBtn" type="button" disabled>🎙 Talk</button>
       </div>
-      <p id="voiceStatus" class="feedback voice-status" aria-live="polite">Microphone permission is required before recording.</p>
+      <div class="voice-feedback" id="voiceFeedback" aria-busy="false">
+        <span class="voice-loader" id="voiceLoader" aria-hidden="true" hidden></span>
+        <p id="voiceStatus" class="feedback voice-status" aria-live="polite">Microphone permission is required before recording.</p>
+      </div>
       <audio id="recordingPreview" class="recording-preview" controls hidden></audio>
     </section>
 
