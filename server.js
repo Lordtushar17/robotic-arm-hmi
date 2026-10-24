@@ -1,4 +1,3 @@
-
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -13,7 +12,7 @@ const POSES_FILE = path.join(DATA_DIR, "poses.json");
 
 const MAX_BODY_SIZE = 16 * 1024;
 const MAX_POSES = 50;
-const JOINT_COUNT = 5;
+const JOINT_COUNT = 6;
 const MIN_ANGLE = 0;
 const MAX_ANGLE = 180;
 
@@ -130,7 +129,7 @@ async function handleApi(req, res, url) {
       arduino: "disconnected",
       camera: "not connected",
       mode: "simulation",
-      joints: [90, 90, 90, 90, 90],
+      joints: [90, 90, 90, 90, 90, 90, 90],
     });
   }
 

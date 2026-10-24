@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,6 +59,20 @@
         <strong>Simulation</strong>
         <span class="small">Hardware disabled</span>
       </article>
+    </section>
+
+    <section class="panel voice-panel" aria-labelledby="voiceHeading">
+      <div class="voice-copy">
+        <p class="eyebrow">VOICE INPUT</p>
+        <h2 id="voiceHeading">Talk to the robot</h2>
+        <p class="muted">Enable your microphone, then record a short command. Voice recognition is not connected yet.</p>
+      </div>
+      <div class="voice-actions">
+        <button class="btn btn-secondary" id="micPermissionBtn" type="button">Enable microphone</button>
+        <button class="btn btn-primary" id="talkBtn" type="button" disabled>🎙 Talk</button>
+      </div>
+      <p id="voiceStatus" class="feedback voice-status" aria-live="polite">Microphone permission is required before recording.</p>
+      <audio id="recordingPreview" class="recording-preview" controls hidden></audio>
     </section>
 
     <section class="main-grid">

@@ -1,13 +1,13 @@
-
 const jointNames = [
   "J1 · Base Rotation",
   "J2 · Shoulder",
   "J3 · Elbow",
   "J4 · Wrist Pitch",
-  "J5 · Gripper / Wrist"
+  "J5 · Gripper / Wrist",
+  "J6 · Wrist Roll"
 ];
 
-const DEFAULT_ANGLES = [90, 90, 90, 90, 90];
+const DEFAULT_ANGLES = [90, 90, 90, 90, 90, 90];
 
 let angles = [...DEFAULT_ANGLES];
 let operation = "Idle";
@@ -323,3 +323,128 @@ refreshSavedPoses();
 refreshStatus();
 
 setInterval(refreshStatus, 5000);
+
+
+// Voice input: request microphone permission and record a short browser-side clip.
+// The recording is only previewed locally at this stage; it is not uploaded to the server.
+const micPermissionBtn = $("micPermissionBtn");
+const talkBtn = $("talkBtn");
+const voiceStatus = $("voiceStatus");
+const recordingPreview = $("recordingPreview");
+
+let microphoneReady = false;
+let activeRecorder = null;
+let activeStream = null;
+let recordedChunks = [];
+let recordingUrl = null;
+
+function setVoiceStatus(message) {
+  voiceStatus.textContent = message;
+}
+
+function stopMicrophoneTracks() {
+  if (activeStream) {
+    activeStream.getTracks().forEach((track) => track.stop());
+    activeStream = null;
+  }
+}
+
+micPermissionBtn.addEventListener("click", async () => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setVoiceStatus("Microphone access is unavailable. Open this page over HTTPS or localhost in a supported browser.");
+    return;
+  }
+
+  micPermissionBtn.disabled = true;
+  setVoiceStatus("Waiting for microphone permission…");
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    microphoneReady = true;
+    talkBtn.disabled = false;
+    setVoiceStatus("Microphone ready. Tap Talk and speak a short command.");
+  } catch (error) {
+    microphoneReady = false;
+    talkBtn.disabled = true;
+
+    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      setVoiceStatus("Microphone permission was denied. Allow microphone access in your browser's site settings, then try again.");
+    } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      setVoiceStatus("No microphone was found on this device.");
+    } else {
+      setVoiceStatus(`Could not access the microphone: ${error.message || "unknown error"}`);
+    }
+  } finally {
+    micPermissionBtn.disabled = false;
+  }
+});
+
+talkBtn.addEventListener("click", async () => {
+  if (activeRecorder?.state === "recording") {
+    activeRecorder.stop();
+    talkBtn.textContent = "🎙 Talk";
+    talkBtn.classList.remove("btn-stop");
+    talkBtn.classList.add("btn-primary");
+    talkBtn.disabled = true;
+    setVoiceStatus("Finishing recording…");
+    return;
+  }
+
+  if (!microphoneReady) {
+    setVoiceStatus("Please enable microphone access first.");
+    return;
+  }
+
+  try {
+    activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    if (!window.MediaRecorder) {
+      stopMicrophoneTracks();
+      setVoiceStatus("Audio recording is not supported by this browser.");
+      return;
+    }
+
+    recordedChunks = [];
+    const preferredMimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+    const mimeType = preferredMimeTypes.find((type) => MediaRecorder.isTypeSupported(type));
+    activeRecorder = mimeType
+      ? new MediaRecorder(activeStream, { mimeType })
+      : new MediaRecorder(activeStream);
+
+    activeRecorder.addEventListener("dataavailable", (event) => {
+      if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+    });
+
+    activeRecorder.addEventListener("stop", () => {
+      const actualType = activeRecorder.mimeType || "audio/webm";
+      const audioBlob = new Blob(recordedChunks, { type: actualType });
+      stopMicrophoneTracks();
+      talkBtn.disabled = false;
+
+      if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+      recordingUrl = URL.createObjectURL(audioBlob);
+      recordingPreview.src = recordingUrl;
+      recordingPreview.hidden = false;
+
+      const sizeKb = Math.max(1, Math.round(audioBlob.size / 1024));
+      setVoiceStatus(`Recording ready (${sizeKb} KB). You can play it back below. It has not been sent to Whistle yet.`);
+    }, { once: true });
+
+    activeRecorder.addEventListener("error", (event) => {
+      stopMicrophoneTracks();
+      talkBtn.disabled = false;
+      talkBtn.textContent = "🎙 Talk";
+      setVoiceStatus(`Recording failed: ${event.error?.message || "browser recorder error"}`);
+    }, { once: true });
+
+    activeRecorder.start();
+    talkBtn.textContent = "■ Stop recording";
+    talkBtn.classList.remove("btn-primary");
+    talkBtn.classList.add("btn-stop");
+    setVoiceStatus("Recording… tap Stop recording when you finish speaking.");
+  } catch (error) {
+    stopMicrophoneTracks();
+    setVoiceStatus(`Could not start recording: ${error.message || "unknown error"}`);
+  }
+});
