@@ -1,0 +1,39 @@
+<section class="panel voice" id="voicePanel" aria-labelledby="voiceHeading">
+  <div class="panel-head">
+    <div>
+      <h2 id="voiceHeading">Voice input</h2>
+      <p class="sub">Record a short English command. Whisper transcribes it on the Raspberry Pi.</p>
+    </div>
+  </div>
+
+  <div class="voice-body">
+    <div class="mic-col">
+      <div class="mic-wrap" id="micWrap" data-state="idle">
+        <button class="mic" id="talkBtn" type="button" disabled aria-label="Record a voice command">
+          <svg class="i-mic" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          <svg class="i-stop" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>
+          <span class="mic-spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+      <span class="mic-label" id="talkLabel">Enable microphone first</span>
+      <button class="btn btn-quiet" id="micPermissionBtn" type="button">Enable microphone</button>
+    </div>
+
+    <div class="voice-feedback" id="voiceFeedback" aria-busy="false">
+      <div class="meter-row">
+        <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="timer num" id="voiceTimer">0:00 / 0:20</span>
+      </div>
+      <p id="voiceStatus" class="voice-status" aria-live="polite">Microphone permission is required before recording.</p>
+      <span class="voice-loader" id="voiceLoader" aria-hidden="true" hidden></span>
+      <audio id="recordingPreview" class="recording-preview" controls hidden></audio>
+    </div>
+  </div>
+
+  <div class="transcript" id="transcriptBox" hidden>
+    <p class="transcript-label">Last transcript</p>
+    <blockquote id="lastCommand"></blockquote>
+    <p class="note">Transcribed only. Voice commands do not move the arm yet.</p>
+    <ol class="command-log" id="commandLog" aria-label="Earlier transcripts"></ol>
+  </div>
+</section>

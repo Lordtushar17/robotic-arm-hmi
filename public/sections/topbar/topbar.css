@@ -1,0 +1,80 @@
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: calc(10px + env(safe-area-inset-top, 0)) 20px 10px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; flex: none; }
+.brand-mark {
+  display: grid; place-items: center;
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+}
+.brand h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+.brand p { font-size: 12px; color: var(--ink-3); }
+
+.rail {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.pill-label { color: var(--ink-3); }
+.pill b { font-weight: 500; }
+
+
+.icon-btn {
+  display: grid; place-items: center;
+  width: 40px; height: 40px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+.icon-sun { display: none; }
+:root[data-theme="dark"] .icon-sun { display: block; }
+:root[data-theme="dark"] .icon-moon { display: none; }
+
+@media (pointer: coarse) {
+  .icon-btn { width: 44px; height: 44px; }
+}
+
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; padding-left: 14px; padding-right: 14px; gap: 10px; }
+  .brand { flex: 1; }
+  .rail { order: 3; flex-basis: 100%; justify-content: flex-start; }
+}

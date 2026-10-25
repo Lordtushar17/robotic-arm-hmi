@@ -1,0 +1,107 @@
+/* ---------- Voice ---------- */
+
+.voice-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+@media (max-width: 520px) {
+  .voice-body { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .voice-feedback { width: 100%; }
+}
+
+.mic-col { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px; }
+.mic-label { font-size: 13px; color: var(--ink-2); text-align: center; }
+
+.mic-wrap { position: relative; width: 92px; height: 92px; }
+.mic-wrap::before {
+  /* moving border ring, visible only while recording */
+  content: "";
+  position: absolute; inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(from var(--beam), transparent 0 60%, var(--accent) 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.mic-wrap[data-state="recording"]::before { opacity: 1; animation: beam 1.6s linear infinite; }
+@keyframes beam { to { --beam: 360deg; } }
+
+.mic {
+  position: relative;
+  display: grid; place-items: center;
+  width: 92px; height: 92px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: pointer;
+  transition: transform 100ms, background 160ms, color 160ms, border-color 160ms;
+}
+.mic:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.mic:active:not(:disabled) { transform: scale(0.96); }
+.mic:disabled { opacity: 0.4; cursor: not-allowed; }
+.mic .i-stop, .mic .mic-spinner { display: none; }
+.mic-wrap[data-state="recording"] .mic { background: var(--bad); border-color: var(--bad); color: #fff; }
+.mic-wrap[data-state="recording"] .i-mic { display: none; }
+.mic-wrap[data-state="recording"] .i-stop { display: block; }
+.mic-wrap[data-state="processing"] .i-mic { display: none; }
+.mic-wrap[data-state="processing"] .mic-spinner { display: block; }
+.mic-spinner {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.voice-feedback {
+  position: relative;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  transition: border-color 200ms;
+}
+.voice-feedback.is-recording { border-color: color-mix(in srgb, var(--bad) 60%, var(--line)); }
+
+.meter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.voice-wave {
+  display: flex; align-items: center; gap: 4px;
+  flex: 1; height: 34px;
+}
+.voice-wave i {
+  flex: 1;
+  height: calc(var(--h, 0.12) * 100%);
+  min-height: 3px;
+  max-width: 8px;
+  border-radius: 3px;
+  background: var(--ink-3);
+  transition: height 90ms linear, background 200ms;
+}
+.voice-feedback.is-recording .voice-wave i { background: var(--bad); }
+.timer { font-size: 12px; color: var(--ink-3); flex: none; }
+
+.voice-status { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.voice-loader { display: none; }
+.recording-preview { width: 100%; height: 36px; margin-top: 10px; }
+
+.transcript {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.transcript-label { font-size: 12px; color: var(--ink-3); margin-bottom: 4px; }
+.transcript blockquote { font-size: 20px; line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.note { margin-top: 6px; font-size: 12px; color: var(--warn); }
+.command-log { margin-top: 12px; display: grid; gap: 4px; }
+.command-log li { display: flex; gap: 10px; font-size: 13px; color: var(--ink-3); }
+.command-log time { font-family: var(--mono); font-size: 12px; flex: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mic-wrap[data-state="recording"]::before { animation: none; }
+}

@@ -1,0 +1,13 @@
+/* ---------- Footer ---------- */
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 16px 20px 28px;
+  font-size: 12px;
+  color: var(--ink-3);
+}

@@ -1,0 +1,70 @@
+/* Design tokens: colours, fonts, radii. Change the look of the whole app here. */
+
+@property --beam {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", monospace;
+  --font: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  --bg: #edf1f5;
+  --surface: #ffffff;
+  --surface-2: #f3f6f9;
+  --line: #d5dce5;
+  --line-soft: #e4e9ef;
+  --ink: #101923;
+  --ink-2: #44566a;
+  --ink-3: #6b7b8d;
+
+  --accent: #0a8fa6;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(10, 143, 166, 0.12);
+
+  --ok: #1fa463;
+  --warn: #d98a12;
+  --bad: #d6393f;
+
+  --link: #aab7c6;
+  --link-hl: #dfe7ef;
+  --link-edge: #8998ab;
+  --metal: #c9d3df;
+
+  --r-panel: 16px;
+  --r-ctl: 10px;
+  --shadow: 0 1px 2px rgba(16, 25, 35, 0.04), 0 10px 28px rgba(16, 25, 35, 0.05);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c1015;
+  --surface: #121820;
+  --surface-2: #18202a;
+  --line: #263140;
+  --line-soft: #1d2733;
+  --ink: #e7edf4;
+  --ink-2: #9aa9ba;
+  --ink-3: #6a7a8e;
+
+  --accent: #38d5e8;
+  --accent-ink: #04222a;
+  --accent-soft: rgba(56, 213, 232, 0.14);
+
+  --ok: #3ccb7f;
+  --warn: #efb04a;
+  --bad: #f06a6f;
+
+  --link: #3a4859;
+  --link-hl: #5a6c82;
+  --link-edge: #6f8299;
+  --metal: #2a3646;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px rgba(0, 0, 0, 0.28);
+
+  color-scheme: dark;
+}

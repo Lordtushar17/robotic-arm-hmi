@@ -1,0 +1,43 @@
+/* ---------- Poses ---------- */
+
+.pose-form label { display: block; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+.pose-input-row { display: flex; gap: 8px; }
+.pose-input-row input {
+  flex: 1; min-width: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface-2);
+}
+.pose-input-row input::placeholder { color: var(--ink-3); }
+.pose-input-row input:focus-visible { outline-offset: 1px; border-color: var(--accent); }
+@media (pointer: coarse) { .pose-input-row input { min-height: 46px; } }
+
+.saved-poses { display: grid; gap: 8px; margin-top: 16px; max-height: 360px; overflow-y: auto; }
+
+.saved-pose {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.glyph { display: flex; align-items: flex-end; gap: 3px; width: 44px; height: 28px; }
+.glyph i {
+  flex: 1;
+  height: calc(var(--v) * 100%);
+  min-height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.85;
+}
+.saved-pose-info { min-width: 0; display: flex; flex-direction: column; }
+.saved-pose-info strong { font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-pose-info span { font-family: var(--mono); font-size: 11px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-pose-actions { display: flex; gap: 6px; }
+.saved-pose-actions .btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
+@media (pointer: coarse) { .saved-pose-actions .btn { min-height: 42px; } }

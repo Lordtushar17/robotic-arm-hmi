@@ -1,0 +1,35 @@
+/* Page grid: where each section sits. Grid area names match the class on each section's root element. */
+
+.layout {
+  display: grid;
+  gap: 16px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 20px 8px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "stage" "voice" "joints" "poses" "safety";
+}
+.stage { grid-area: stage; }
+.voice { grid-area: voice; }
+.joints { grid-area: joints; }
+.poses { grid-area: poses; }
+.safety { grid-area: safety; }
+
+@media (min-width: 1020px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-areas:
+      "stage  voice"
+      "joints poses"
+      "joints safety";
+    grid-template-rows: auto auto 1fr;
+  }
+  .poses, .safety { align-self: start; }
+}
+
+@media (max-width: 720px) {
+  .layout { padding: 14px 12px 4px; gap: 12px; }
+}
+
+/* Placeholders disappear once their section file is loaded. */
+[data-include] { display: contents; }

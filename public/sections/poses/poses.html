@@ -1,0 +1,21 @@
+<section class="panel poses" aria-labelledby="posesTitle">
+  <div class="panel-head">
+    <div>
+      <h2 id="posesTitle">Saved poses</h2>
+      <p class="sub">Store the current joint values and reload them in simulation.</p>
+    </div>
+    <span class="chip" id="poseCount">0 saved</span>
+  </div>
+
+  <form id="savePoseForm" class="pose-form">
+    <label for="poseName">Pose name</label>
+    <div class="pose-input-row">
+      <input id="poseName" name="poseName" type="text" maxlength="40" placeholder="Pick position" autocomplete="off" required>
+      <button class="btn btn-primary" type="submit">Save pose</button>
+    </div>
+  </form>
+
+  <div id="savedPoses" class="saved-poses" aria-live="polite">
+    <p class="muted">No poses saved yet.</p>
+  </div>
+</section>

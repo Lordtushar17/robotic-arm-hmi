@@ -1,0 +1,19 @@
+<section class="panel joints" aria-labelledby="jointsTitle">
+  <div class="panel-head">
+    <div>
+      <h2 id="jointsTitle">Joint positions</h2>
+      <p class="sub">Simulation only. These controls do not move the physical arm.</p>
+    </div>
+    <span class="chip chip-pending" id="pendingChip" hidden>Not applied</span>
+  </div>
+
+  <div id="jointControls" class="joint-list">
+    <p class="muted">Loading joint positions…</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="homeBtn" type="button">Reset to 90°</button>
+    <button class="btn btn-primary" id="applyBtn" type="button">Apply positions</button>
+  </div>
+  <p id="controlMessage" class="feedback" aria-live="polite"></p>
+</section>

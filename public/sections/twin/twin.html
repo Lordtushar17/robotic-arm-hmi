@@ -1,0 +1,84 @@
+<section class="panel stage" id="stage" aria-labelledby="stageTitle">
+  <div class="stage-grid" aria-hidden="true"></div>
+  <div class="stage-grid lit" aria-hidden="true"></div>
+
+  <div class="stage-head">
+    <div>
+      <h2 id="stageTitle">Digital twin</h2>
+      <p class="sub">Preview of the simulated pose. The physical arm does not move.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Simulation state">
+      <button class="seg-btn" id="startBtn" type="button" aria-pressed="false">Start</button>
+      <button class="seg-btn" id="pauseBtn" type="button" aria-pressed="false">Pause</button>
+      <button class="seg-btn seg-stop" id="stopBtn" type="button" aria-pressed="false">Stop</button>
+    </div>
+  </div>
+
+  <div class="stage-body">
+    <svg class="twin" id="twin" viewBox="10 40 480 290" role="img" aria-label="Side view of the simulated robotic arm">
+      <line class="floor" x1="10" y1="316" x2="490" y2="316"/>
+      <g class="floor-ticks">
+        <line x1="70" y1="316" x2="62" y2="326"/><line x1="130" y1="316" x2="122" y2="326"/>
+        <line x1="190" y1="316" x2="182" y2="326"/><line x1="250" y1="316" x2="242" y2="326"/>
+        <line x1="310" y1="316" x2="302" y2="326"/><line x1="370" y1="316" x2="362" y2="326"/>
+        <line x1="430" y1="316" x2="422" y2="326"/>
+      </g>
+      <path class="reach-arc" d="M 4 290 A 246 246 0 0 1 496 290"/>
+
+      <polyline class="ghost" id="ghostLine" points=""/>
+
+      <rect class="pedestal" x="218" y="296" width="64" height="20" rx="4"/>
+      <rect class="turret" x="228" y="276" width="44" height="24" rx="6"/>
+
+      <line class="link-body" id="upperBody" x1="250" y1="290" x2="250" y2="180"/>
+      <line class="link-hl" id="upperHl" x1="250" y1="290" x2="250" y2="180"/>
+      <line class="link-body" id="foreBody" x1="250" y1="180" x2="342" y2="180"/>
+      <line class="link-hl" id="foreHl" x1="250" y1="180" x2="342" y2="180"/>
+
+      <g id="hand">
+        <line class="finger" id="fingerA" x1="0" y1="0" x2="0" y2="0"/>
+        <line class="finger" id="fingerB" x1="0" y1="0" x2="0" y2="0"/>
+        <line class="palm" id="palm" x1="0" y1="0" x2="0" y2="0"/>
+      </g>
+
+      <circle class="joint" id="jShoulder" cx="250" cy="290" r="11"/>
+      <circle class="joint" id="jElbow" cx="250" cy="180" r="9"/>
+      <circle class="joint" id="jWrist" cx="342" cy="180" r="7"/>
+      <circle class="joint-core" cx="250" cy="290" r="3.5"/>
+      <circle class="joint-core" id="cElbow" cx="250" cy="180" r="3"/>
+      <circle class="joint-core" id="cWrist" cx="342" cy="180" r="2.5"/>
+    </svg>
+
+    <div class="instruments">
+      <figure class="dial" id="dialBase">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <path class="dial-range" d="M 10 64 A 50 50 0 0 1 110 64"/>
+          <circle class="dial-ring" cx="60" cy="64" r="50"/>
+          <line class="dial-tick" x1="60" y1="10" x2="60" y2="18"/>
+          <line class="dial-tick" x1="10" y1="64" x2="18" y2="64"/>
+          <line class="dial-tick" x1="110" y1="64" x2="102" y2="64"/>
+          <line class="dial-needle" id="baseNeedle" x1="60" y1="64" x2="60" y2="30"/>
+          <circle class="dial-hub" cx="60" cy="64" r="5"/>
+        </svg>
+        <figcaption><span>Base, top view</span><b class="num" id="readJ1">90°</b></figcaption>
+      </figure>
+      <figure class="dial" id="dialRoll">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="dial-ring" cx="60" cy="60" r="42"/>
+          <line class="dial-tick" x1="60" y1="14" x2="60" y2="22"/>
+          <g id="rollBar">
+            <line class="roll-bar" x1="28" y1="60" x2="92" y2="60"/>
+            <circle class="roll-dot" cx="92" cy="60" r="5"/>
+          </g>
+          <circle class="dial-hub" cx="60" cy="60" r="5"/>
+        </svg>
+        <figcaption><span>Wrist roll</span><b class="num" id="readJ6">90°</b></figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="stage-foot">
+    <p id="operationStatus" class="feedback" aria-live="polite">Simulation idle. No hardware commands sent.</p>
+    <p class="legend" aria-hidden="true"><i class="key key-live"></i>Current <i class="key key-applied"></i>Applied</p>
+  </div>
+</section>
