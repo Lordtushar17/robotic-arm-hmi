@@ -21,16 +21,15 @@ body {
 h1, h2, p, ul, ol, figure, blockquote { margin: 0; padding: 0; }
 ul, ol { list-style: none; }
 button, input { font: inherit; color: inherit; }
-.num { font-family: var(--mono); font-feature-settings: "tnum"; }
-.muted { color: var(--ink-2); font-size: 14px; }
+.num { font-family: var(--mono); font-feature-settings: "tnum", "ss01"; }
+.muted { color: var(--ink-2); font-size: var(--fs-body); }
 
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
-/* Reduced motion (applies everywhere) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -1,16 +1,21 @@
-/* Shared building blocks used by several sections: panels, chips, buttons, status dots. */
+/* Shared building blocks: chips, buttons, dots, readouts. */
 
-.panel {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  box-shadow: var(--shadow);
-  padding: 20px;
+.panel h2 {
+  font-size: var(--fs-title);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-top: 6px; /* clears the data-label tag above */
 }
 
-.panel h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
-.sub { margin-top: 2px; font-size: 13px; color: var(--ink-2); max-width: 52ch; }
+.sub {
+  margin-top: 4px;
+  font-size: var(--fs-meta);
+  font-family: var(--mono);
+  color: var(--ink-3);
+  max-width: 52ch;
+}
 
 .panel-head {
   display: flex;
@@ -23,16 +28,20 @@
 .chip {
   flex: none;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: 3px;
   border: 1px solid var(--line);
   background: var(--surface-2);
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
   color: var(--ink-2);
 }
 .chip-pending {
   color: var(--warn);
-  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
-  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  text-shadow: 0 0 8px var(--amber-glow);
 }
 
 .feedback { font-size: 13px; color: var(--ink-2); min-height: 20px; }
@@ -43,9 +52,21 @@
   background: var(--ink-3);
   flex: none;
 }
-.dot.status-green, .dot-ok { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
-.dot.status-amber, .dot-warn { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 22%, transparent); }
-.dot.status-red { background: var(--bad); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 22%, transparent); }
+.dot.status-green, .dot-ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent),
+              0 0 10px var(--ok);
+}
+.dot.status-amber, .dot-warn {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 22%, transparent),
+              0 0 10px var(--warn);
+}
+.dot.status-red {
+  background: var(--bad);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 22%, transparent),
+              0 0 10px var(--bad);
+}
 
 /* ---------- Buttons ---------- */
 
@@ -58,29 +79,59 @@
   background: var(--surface-2);
   color: var(--ink);
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--fs-body);
   cursor: pointer;
-  transition: border-color 150ms, background 150ms, transform 80ms;
+  transition: border-color 150ms, background 150ms, transform 80ms, box-shadow 150ms;
 }
 .btn:hover:not(:disabled) { border-color: var(--ink-3); }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 75%, #000));
   border-color: var(--accent);
   color: var(--accent-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 20px var(--accent-soft);
 }
-.btn-primary:hover:not(:disabled) { border-color: var(--accent); filter: brightness(1.08); }
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 26px var(--accent-soft);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+}
 
-.btn-quiet { background: transparent; color: var(--ink-2); min-height: 34px; font-size: 13px; }
-.btn-danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 55%, var(--line)); background: color-mix(in srgb, var(--bad) 10%, var(--surface)); }
+.btn-quiet {
+  background: transparent;
+  color: var(--ink-2);
+  min-height: 34px;
+  font-size: 13px;
+}
+.btn-danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 55%, var(--line));
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+}
 
 @media (pointer: coarse) {
   .btn { min-height: 46px; }
 }
 
-@media (max-width: 720px) {
-  .panel { padding: 16px; border-radius: 14px; }
+/* ---------- Hero readouts ---------- */
+
+.readout-lg {
+  font-family: var(--mono);
+  font-size: var(--fs-readout-lg);
+  font-weight: 500;
+  letter-spacing: var(--tracking-readout);
+  color: var(--ink);
+  line-height: 1;
+  font-feature-settings: "tnum", "ss01";
+}
+.readout-lg .unit {
+  font-size: 0.42em;
+  color: var(--ink-3);
+  margin-left: 2px;
+  font-weight: 400;
 }

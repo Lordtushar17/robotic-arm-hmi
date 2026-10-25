@@ -2,8 +2,8 @@
 
 .topbar {
   position: sticky;
-  top: 0;
-  z-index: 20;
+  top: 44px; /* below the status rail */
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -11,20 +11,26 @@
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .brand { display: flex; align-items: center; gap: 12px; flex: none; }
 .brand-mark {
   display: grid; place-items: center;
   width: 38px; height: 38px;
-  border-radius: 11px;
+  border-radius: 8px;
   color: var(--accent);
   background: var(--accent-soft);
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
 }
-.brand h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
-.brand p { font-size: 12px; color: var(--ink-3); }
+.brand h1 { font-size: 15px; font-weight: 500; letter-spacing: 0; line-height: 1.2; }
+.brand p {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+}
 
 .rail {
   display: flex;
@@ -44,14 +50,19 @@
   flex: none;
   padding: 6px 12px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 3px;
   background: var(--surface);
-  font-size: 13px;
+  font-size: 12px;
+  font-family: var(--mono);
   white-space: nowrap;
 }
-.pill-label { color: var(--ink-3); }
+.pill-label {
+  color: var(--ink-dim);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 .pill b { font-weight: 500; }
-
 
 .icon-btn {
   display: grid; place-items: center;

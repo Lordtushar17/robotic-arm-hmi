@@ -1,6 +1,6 @@
 /* =========================================================
    Top bar section: server/controller/camera status pills
-   (polls GET /api/status every 5 s) and the theme switch.
+   and the theme switch.
    ========================================================= */
 
 import { $ } from "../../shared/dom.js";
@@ -56,12 +56,19 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   toggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
   toggle.title = dark ? "Switch to light theme" : "Switch to dark theme";
+  
+  // Update browser meta theme color
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#0c1015" : "#edf1f5";
+  if (meta) meta.content = dark ? "#0a0e13" : "#edf1f5";
+  
+  // Refresh the twin if needed (colors sometimes need a nudge)
+  emit("theme:changed", theme);
 }
 
 function initTheme() {
-  applyTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
+  // Determine starting theme
+  let currentTheme = document.documentElement.dataset.theme || "dark";
+  applyTheme(currentTheme);
 
   $("themeToggle").addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -69,7 +76,7 @@ function initTheme() {
     try {
       localStorage.setItem("robotic-arm-theme", next);
     } catch {
-      // The theme still changes for this page even if saving fails.
+      // Ignore storage errors
     }
   });
 }

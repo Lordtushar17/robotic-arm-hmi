@@ -1,6 +1,13 @@
-<section class="panel stage" id="stage" aria-labelledby="stageTitle">
-  <div class="stage-grid" aria-hidden="true"></div>
+<section class="panel stage" id="stage" data-label="01 / DIGITAL TWIN" aria-labelledby="stageTitle">
   <div class="stage-grid lit" aria-hidden="true"></div>
+  <div class="twin-scan" aria-hidden="true"></div>
+
+  <svg class="twin-brackets" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <path class="br br-tl" d="M0,6 L0,0 L6,0" vector-effect="non-scaling-stroke"/>
+    <path class="br br-tr" d="M94,0 L100,0 L100,6" vector-effect="non-scaling-stroke"/>
+    <path class="br br-bl" d="M0,94 L0,100 L6,100" vector-effect="non-scaling-stroke"/>
+    <path class="br br-br" d="M94,100 L100,100 L100,94" vector-effect="non-scaling-stroke"/>
+  </svg>
 
   <div class="stage-head">
     <div>
@@ -24,6 +31,19 @@
         <line x1="430" y1="316" x2="422" y2="326"/>
       </g>
       <path class="reach-arc" d="M 4 290 A 246 246 0 0 1 496 290"/>
+
+      <!-- Base reticule: counter-rotating dashed rings + tick marks around the base joint. -->
+      <g class="reticule" transform="translate(250 290)">
+        <circle class="ret-ring ret-ring-a" r="42"/>
+        <circle class="ret-ring ret-ring-b" r="30"/>
+        <g class="ret-ticks">
+          <line x1="0" y1="-54" x2="0" y2="-50"/>
+          <line x1="54" y1="0" x2="50" y2="0"/>
+          <line x1="0" y1="54" x2="0" y2="50"/>
+          <line x1="-54" y1="0" x2="-50" y2="0"/>
+        </g>
+        <line class="ret-marker" id="retMarker" x1="0" y1="-50" x2="0" y2="-58"/>
+      </g>
 
       <polyline class="ghost" id="ghostLine" points=""/>
 
@@ -60,7 +80,7 @@
           <line class="dial-needle" id="baseNeedle" x1="60" y1="64" x2="60" y2="30"/>
           <circle class="dial-hub" cx="60" cy="64" r="5"/>
         </svg>
-        <figcaption><span>Base, top view</span><b class="num" id="readJ1">90°</b></figcaption>
+        <figcaption><span>Base, top view</span><b class="readout-lg" id="readJ1">90<span class="unit">°</span></b></figcaption>
       </figure>
       <figure class="dial" id="dialRoll">
         <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -72,7 +92,7 @@
           </g>
           <circle class="dial-hub" cx="60" cy="60" r="5"/>
         </svg>
-        <figcaption><span>Wrist roll</span><b class="num" id="readJ6">90°</b></figcaption>
+        <figcaption><span>Wrist roll</span><b class="readout-lg" id="readJ6">90<span class="unit">°</span></b></figcaption>
       </figure>
     </div>
   </div>

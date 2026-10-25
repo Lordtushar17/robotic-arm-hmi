@@ -1,12 +1,10 @@
 /* =========================================================
    Saved poses section.
-   Talks to GET/POST /api/poses and DELETE /api/poses/:id.
-   Loading a pose only changes the sliders and the twin.
    ========================================================= */
 
 import { $ } from "../../shared/dom.js";
 import { apiRequest } from "../../shared/api.js";
-import { state, setAngles, say } from "../../shared/store.js";
+import { state, setAngles, say, emit } from "../../shared/store.js";
 
 const MAX_POSES = 50;
 
@@ -86,7 +84,6 @@ function renderSavedPoses() {
     loadButton.textContent = "Load";
     loadButton.addEventListener("click", () => loadPose(pose.id));
 
-    // Two-step delete: first click asks, second click (within 3 s) deletes.
     const deleteButton = document.createElement("button");
     deleteButton.className = "btn";
     deleteButton.type = "button";
@@ -152,7 +149,13 @@ async function savePose(event) {
 function loadPose(id) {
   const pose = savedPoses.find((item) => item.id === id);
   if (!pose) return;
+  
+  // Set the angles in the store
   setAngles(pose.angles);
+  
+  // Tell the twin to snap its internal state so it animates from the current pose to the new one
+  emit("twin:snap");
+  
   say(`Loaded "${pose.name}". Press Apply positions to confirm. The physical arm did not move.`);
 }
 

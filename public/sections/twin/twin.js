@@ -1,9 +1,5 @@
 /* =========================================================
    Digital twin section.
-   Illustrative side view. Link lengths and joint zero points are
-   approximations, not your arm's real calibration.
-   90 degrees on every joint is the neutral pose
-   (upper arm vertical, forearm horizontal).
    SIMULATION ONLY: nothing here talks to the Arduino.
    ========================================================= */
 
@@ -16,8 +12,6 @@ const MAX_REACH = L1 + L2 + L3;
 const RAD = Math.PI / 180;
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// What the twin currently draws. It eases toward state.angles.
-// It starts in a folded pose so the arm "wakes up" into neutral on load.
 let shown = [90, 28, 168, 90, 150, 90];
 let twinFrame = null;
 
@@ -35,9 +29,15 @@ export function initTwin() {
     $("stage").dataset.active = index === null ? "" : String(index);
   });
 
-  initSpotlight();
-  initRunControls();
+  // Listen for snap requests (e.g., from poses)
+  on("twin:snap", () => {
+    shown = [...state.angles];
+    renderTwin();
+    updateReadouts();
+    updateGhost();
+  });
 
+  initRunControls();
   updateReadouts();
   animateTwin();
   updateGhost();
@@ -85,7 +85,6 @@ function renderTwin() {
   setCircle($("jWrist"), wrist);
   setCircle($("cWrist"), wrist);
 
-  // Hand: palm along the wrist direction, two fingers that spread with J5.
   const dir = { x: Math.sin(p3), y: -Math.cos(p3) };
   const side = { x: -dir.y, y: dir.x };
   const palmEnd = { x: wrist.x + dir.x * 14, y: wrist.y + dir.y * 14 };
@@ -103,16 +102,17 @@ function renderTwin() {
     );
   });
 
-  // Top-view dial: needle direction from J1, length from horizontal reach.
   const r1 = (a[0] - 90) * RAD;
   const len = (reach / MAX_REACH) * 44;
   const needle = $("baseNeedle");
   needle.setAttribute("x2", (60 + Math.sin(r1) * len).toFixed(1));
   needle.setAttribute("y2", (64 - Math.cos(r1) * len).toFixed(1));
 
+  const marker = $("retMarker");
+  if (marker) marker.setAttribute("transform", `rotate(${(a[0] - 90).toFixed(1)})`);
+
   $("rollBar").setAttribute("transform", `rotate(${(a[5] - 90).toFixed(1)} 60 60)`);
 
-  // Dashed outline of the applied pose.
   const ghost = solveArm(state.applied);
   $("ghostLine").setAttribute(
     "points",
@@ -137,7 +137,8 @@ function animateTwin() {
       const diff = state.angles[i] - value;
       if (Math.abs(diff) < 0.08) return state.angles[i];
       moving = true;
-      return value + diff * 0.16;
+      // Smooth easing factor
+      return value + diff * 0.08;
     });
 
     renderTwin();
@@ -151,23 +152,20 @@ function updateGhost() {
   $("ghostLine").classList.toggle("on", isPending());
 }
 
+function setReadout(id, value) {
+  const el = $(id);
+  if (!el) return;
+  const unit = el.querySelector(".unit");
+  el.textContent = String(value);
+  if (unit) el.append(unit);
+}
+
 function updateReadouts() {
-  $("readJ1").textContent = `${state.angles[0]}°`;
-  $("readJ6").textContent = `${state.angles[5]}°`;
+  setReadout("readJ1", state.angles[0]);
+  setReadout("readJ6", state.angles[5]);
 }
 
-/* ---------- Pointer spotlight + grid reveal ---------- */
-
-function initSpotlight() {
-  const stage = $("stage");
-  stage.addEventListener("pointermove", (event) => {
-    const box = stage.getBoundingClientRect();
-    stage.style.setProperty("--mx", `${event.clientX - box.left}px`);
-    stage.style.setProperty("--my", `${event.clientY - box.top}px`);
-  });
-}
-
-/* ---------- Run state (Start / Pause / Stop, simulation only) ---------- */
+/* ---------- Run state ---------- */
 
 function initRunControls() {
   const buttons = { Running: $("startBtn"), Paused: $("pauseBtn"), Stopped: $("stopBtn") };
@@ -177,6 +175,7 @@ function initRunControls() {
       btn.setAttribute("aria-pressed", String(name === next));
     });
     $("operationStatus").textContent = `Simulation ${next.toLowerCase()}. No hardware commands sent.`;
+    document.body.dataset.mode = next.toLowerCase();
   }
 
   $("startBtn").addEventListener("click", () => setOperation("Running"));

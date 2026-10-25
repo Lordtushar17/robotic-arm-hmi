@@ -17,7 +17,7 @@
 }
 .joint-row.is-active { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
 
-.joint-name { display: flex; align-items: baseline; gap: 8px; font-size: 14px; font-weight: 500; }
+.joint-name { display: flex; align-items: baseline; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
 .joint-id {
   font-family: var(--mono);
   font-size: 12px;
@@ -27,8 +27,11 @@
   padding: 1px 6px;
 }
 .joint-value { display: flex; align-items: center; gap: 6px; }
+
+/* Styled numeric input */
 .angle-value {
-  min-width: 56px;
+  min-width: 64px;
+  width: 64px;
   text-align: center;
   font-family: var(--mono);
   font-size: 15px;
@@ -37,7 +40,24 @@
   border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--line);
+  color: var(--ink);
+  transition: border-color 150ms;
 }
+.angle-value:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* Hide the default number spinners */
+.angle-value::-webkit-outer-spin-button,
+.angle-value::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.angle-value[type=number] {
+  -moz-appearance: textfield;
+}
+
 .step-btn {
   display: grid; place-items: center;
   width: 30px; height: 30px;

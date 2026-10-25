@@ -1,0 +1,90 @@
+/* =========================================================
+   Global atmosphere: dot grid + vignette + panel reset.
+   Load AFTER tokens.css and BEFORE base.css.
+   ========================================================= */
+
+:root {
+  --mouse-x: 50vw;
+  --mouse-y: 50vh;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--accent-soft), transparent 60%),
+    radial-gradient(ellipse at center, transparent 55%, var(--bg-vignette) 100%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+/* Fixed dot grid behind everything, reacting to mouse. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(circle, var(--bg-grid) 2px, transparent 2px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), #000 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), #000 0%, transparent 100%);
+  transition: opacity 300ms ease;
+}
+
+/* Subtle second grid that is always visible faintly */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(circle, var(--bg-grid) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  opacity: 0.15; /* Faintly visible everywhere */
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, #000 30%, transparent 100%);
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* ---------- Panel reset ---------- */
+
+.panel {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 30px 24px 22px;
+  position: relative;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.panel::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 8px;
+  left: 24px;
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.panel:not([data-label])::after { content: none; }
+
+@media (max-width: 720px) {
+  .panel { padding: 26px 16px 18px; }
+  .panel::before, .panel::after { left: 16px; right: 16px; }
+}
+
+/* Remove the old twin-specific grid overlay classes */
+.stage-grid, .stage-grid.lit { display: none !important; }

@@ -1,6 +1,6 @@
 /* =========================================================
    Joint positions section.
-   Sliders, +/- steppers, Reset and Apply.
+   Sliders, +/- steppers, direct input, Reset and Apply.
    SIMULATION ONLY: nothing here moves the physical arm.
    ========================================================= */
 
@@ -31,6 +31,11 @@ export function initJoints() {
   on("applied", updatePending);
   on("message", (text) => {
     $("controlMessage").textContent = text;
+  });
+  
+  on("twin:snap", () => {
+    syncAll();
+    updatePending();
   });
 
   $("homeBtn").addEventListener("click", () => {
@@ -76,9 +81,14 @@ function buildJoints() {
     minus.textContent = "−";
     minus.setAttribute("aria-label", `Decrease ${joint.name} by 1 degree`);
 
-    const output = document.createElement("output");
-    output.className = "angle-value";
-    output.htmlFor = `joint-${index}`;
+    // Replaced <output> with <input type="number">
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "angle-value";
+    input.id = `joint-${index}`;
+    input.min = "0";
+    input.max = "180";
+    input.step = "1";
 
     const plus = document.createElement("button");
     plus.type = "button";
@@ -86,13 +96,13 @@ function buildJoints() {
     plus.textContent = "+";
     plus.setAttribute("aria-label", `Increase ${joint.name} by 1 degree`);
 
-    valueBox.append(minus, output, plus);
+    valueBox.append(minus, input, plus);
 
     const wrap = document.createElement("div");
     wrap.className = "slider-wrap";
     const slider = document.createElement("input");
     slider.type = "range";
-    slider.id = `joint-${index}`;
+    slider.id = `slider-${index}`;
     slider.min = "0";
     slider.max = "180";
     slider.step = "1";
@@ -111,14 +121,33 @@ function buildJoints() {
       say("Position changed. Press Apply positions to confirm.");
     };
 
+    // Slider and Steppers
     slider.addEventListener("input", () => change(Number(slider.value)));
     minus.addEventListener("click", (e) => change(state.angles[index] - (e.shiftKey ? 10 : 1)));
     plus.addEventListener("click", (e) => change(state.angles[index] + (e.shiftKey ? 10 : 1)));
 
+    // Manual text input
+    const commitInput = () => {
+      const val = Number(input.value);
+      if (!Number.isNaN(val)) {
+        change(val);
+      } else {
+        // Revert if invalid
+        input.value = state.angles[index];
+      }
+    };
+    
+    input.addEventListener("blur", commitInput);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        input.blur();
+      }
+    });
+
     row.addEventListener("focusin", () => setActive(index));
     row.addEventListener("pointerenter", () => setActive(index));
 
-    rows.push({ row, slider, output });
+    rows.push({ row, slider, input });
   });
 
   container.addEventListener("pointerleave", () => {
@@ -134,7 +163,11 @@ function syncAll() {
     const ui = rows[i];
     ui.slider.value = String(value);
     ui.slider.style.setProperty("--pct", `${(value / 180) * 100}%`);
-    ui.output.textContent = `${value}°`;
+    
+    // Only update the input if the user is NOT currently typing in it
+    if (document.activeElement !== ui.input) {
+      ui.input.value = String(value);
+    }
   });
 }
 

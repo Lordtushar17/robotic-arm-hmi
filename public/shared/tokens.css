@@ -1,4 +1,4 @@
-/* Design tokens: colours, fonts, radii. Change the look of the whole app here. */
+/* Design tokens */
 
 @property --beam {
   syntax: "<angle>";
@@ -7,64 +7,97 @@
 }
 
 :root {
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "Courier New", monospace;
   --font: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
 
-  --bg: #edf1f5;
-  --surface: #ffffff;
-  --surface-2: #f3f6f9;
-  --line: #d5dce5;
-  --line-soft: #e4e9ef;
-  --ink: #101923;
-  --ink-2: #44566a;
-  --ink-3: #6b7b8d;
+  --fs-label: 11px;
+  --fs-meta: 12px;
+  --fs-body: 14px;
+  --fs-title: 15px;
+  --fs-readout: 28px;
+  --fs-readout-lg: 44px;
 
-  --accent: #0a8fa6;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(10, 143, 166, 0.12);
+  --tracking-label: 0.14em;
+  --tracking-readout: -0.02em;
 
-  --ok: #1fa463;
-  --warn: #d98a12;
-  --bad: #d6393f;
-
-  --link: #aab7c6;
-  --link-hl: #dfe7ef;
-  --link-edge: #8998ab;
-  --metal: #c9d3df;
-
-  --r-panel: 16px;
-  --r-ctl: 10px;
-  --shadow: 0 1px 2px rgba(16, 25, 35, 0.04), 0 10px 28px rgba(16, 25, 35, 0.05);
+  --r-panel: 6px;
+  --r-ctl: 6px;
 
   color-scheme: light;
 }
 
+:root[data-theme="light"] {
+  --bg: #f0f4f8;
+  --bg-grid: rgba(10, 143, 166, 0.15); /* Stronger in light mode */
+  --bg-vignette: rgba(16, 25, 35, 0.08);
+
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #e2e8f0;
+
+  --line: #cbd5e1;
+  --line-soft: #e2e8f0;
+  --hairline: rgba(16, 25, 35, 0.12);
+
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --ink-3: #64748b;
+  --ink-dim: #94a3b8;
+
+  --accent: #0ea5e9;
+  --accent-hi: #38bdf8;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(14, 165, 233, 0.1);
+  --accent-glow: rgba(14, 165, 233, 0.3);
+
+  --ok: #10b981;
+  --warn: #d97706;
+  --bad: #ef4444;
+  --amber-glow: rgba(217, 119, 6, 0.2);
+
+  --link: #94a3b8;
+  --link-hl: #cbd5e1;
+  --link-edge: #64748b;
+  --metal: #cbd5e1;
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 28px rgba(0, 0, 0, 0.04);
+}
+
 :root[data-theme="dark"] {
-  --bg: #0c1015;
-  --surface: #121820;
-  --surface-2: #18202a;
-  --line: #263140;
-  --line-soft: #1d2733;
-  --ink: #e7edf4;
-  --ink-2: #9aa9ba;
-  --ink-3: #6a7a8e;
+  --bg: #090d12;
+  --bg-grid: rgba(75, 224, 240, 0.18); /* Much brighter in dark mode */
+  --bg-vignette: rgba(0, 0, 0, 0.65);
 
-  --accent: #38d5e8;
-  --accent-ink: #04222a;
-  --accent-soft: rgba(56, 213, 232, 0.14);
+  --surface: #0f151c;
+  --surface-2: #141d26;
+  --surface-3: #1a2531;
 
-  --ok: #3ccb7f;
-  --warn: #efb04a;
-  --bad: #f06a6f;
+  --line: #2a3748;
+  --line-soft: #1a2432;
+  --hairline: rgba(120, 160, 190, 0.15);
 
-  --link: #3a4859;
-  --link-hl: #5a6c82;
-  --link-edge: #6f8299;
-  --metal: #2a3646;
+  --ink: #f1f5f9;
+  --ink-2: #94a3b8;
+  --ink-3: #64748b;
+  --ink-dim: #3b4a5e;
 
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px rgba(0, 0, 0, 0.28);
+  --accent: #38bdf8;
+  --accent-hi: #7dd3fc;
+  --accent-ink: #082f49;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+  --accent-glow: rgba(56, 189, 248, 0.4);
+
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --amber-glow: rgba(251, 191, 36, 0.3);
+
+  --link: #334155;
+  --link-hl: #475569;
+  --link-edge: #64748b;
+  --metal: #1e293b;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 12px 32px rgba(0, 0, 0, 0.4);
 
   color-scheme: dark;
 }

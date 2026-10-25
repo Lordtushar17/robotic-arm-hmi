@@ -1,0 +1,144 @@
+/* =========================================================
+   Top status rail + bottom event rail.
+   These two bars are what turn the page into a console.
+   ========================================================= */
+
+.status-rail,
+.event-rail {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 44px;
+  padding: 0 20px;
+  font-family: var(--mono);
+  font-size: var(--fs-meta);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.status-rail {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.event-rail {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  border-top: 1px solid var(--hairline);
+}
+
+.rail-brand,
+.rail-meta-group,
+.rail-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.rail-right { margin-left: auto; }
+
+.rail-label {
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.rail-value { color: var(--ink); }
+.rail-value-amber {
+  color: var(--warn);
+  text-shadow: 0 0 8px var(--amber-glow);
+}
+
+.rail-meta { color: var(--ink-3); }
+
+.rail-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--hairline);
+}
+
+.rail-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  line-height: 1.1;
+}
+.rail-cell .rail-label { font-size: 9px; }
+
+.rail-led {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent),
+              0 0 10px var(--ok);
+  animation: rail-breathe 3s ease-in-out infinite;
+  flex: none;
+}
+.rail-led[data-state="warning"] {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 20%, transparent),
+              0 0 10px var(--warn);
+}
+.rail-led[data-state="offline"] {
+  background: var(--bad);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad) 20%, transparent),
+              0 0 10px var(--bad);
+}
+
+@keyframes rail-breathe {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* Slow scan line across the top rail */
+.rail-scroll {
+  flex: 1;
+  height: 1px;
+  position: relative;
+  overflow: hidden;
+  min-width: 40px;
+}
+.scan-line {
+  position: absolute; top: 0; left: -20%;
+  height: 1px; width: 20%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+  animation: rail-scan 8s linear infinite;
+}
+@keyframes rail-scan {
+  0%   { left: -20%; }
+  100% { left: 100%; }
+}
+
+/* Event rail ticker */
+.event-scroller {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-2);
+}
+.event-item {
+  color: var(--ink-2);
+}
+.event-item strong {
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 720px) {
+  .status-rail, .event-rail { padding: 0 14px; gap: 12px; font-size: 11px; }
+  .rail-meta, .rail-divider, #railHost { display: none; }
+  .rail-cell:nth-child(2) { display: none; } /* hide uptime on phones */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line, .rail-led { animation: none; }
+}

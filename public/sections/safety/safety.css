@@ -1,8 +1,23 @@
 /* ---------- Safety ---------- */
 
+.safety {
+  padding-top: 32px;
+}
+
+/* Hazard stripe in place of the generic hairline above the panel. */
+.safety::before {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--warn) 0 6px,
+    transparent 6px 14px
+  ) !important;
+  height: 3px !important;
+  opacity: 0.7;
+}
+
 .safety h2 { margin-bottom: 12px; }
 .safety-list { display: grid; gap: 12px; }
 .safety-list li { display: flex; gap: 12px; align-items: flex-start; }
 .safety-list .dot { margin-top: 7px; }
-.safety-list strong { font-weight: 500; font-size: 14px; }
+.safety-list strong { font-weight: 500; font-size: var(--fs-body); }
 .safety-list p { font-size: 13px; color: var(--ink-2); }
