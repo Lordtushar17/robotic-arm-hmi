@@ -23,7 +23,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-image: radial-gradient(circle, var(--bg-grid) 2px, transparent 2px);
+  background-image: radial-gradient(circle, var(--bg-grid) 2.2px, transparent 2.2px);
   background-size: 24px 24px;
   mask-image: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), #000 0%, transparent 100%);
   -webkit-mask-image: radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), #000 0%, transparent 100%);
